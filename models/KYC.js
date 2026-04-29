@@ -12,25 +12,28 @@ const documentSchema = new mongoose.Schema({
   },
 });
 
-const kycSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  documents: {
-    type: [documentSchema],
-    validate: {
-      validator: (docs) => docs.length === 3, // should be 3 documents
-      message: "You must upload exactly 3 documents",
+const kycSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    documents: {
+      type: [documentSchema],
+      validate: {
+        validator: (docs) => docs.length === 3, // should be 3 documents
+        message: "You must upload exactly 3 documents",
+      },
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
   },
-  status: {
-    type: String,
-    enum: ["pending", "approved", "rejected"],
-    default: "pending",
-  },
-});
+  { timestamps: true },
+);
 
 const KYC = mongoose.model("KYC", kycSchema);
 module.exports = KYC;
