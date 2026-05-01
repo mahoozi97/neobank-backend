@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const morgan = require("morgan");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 require("dotenv").config();
 const PORT = process.env.PORT;
@@ -15,8 +16,13 @@ app.use(express.json());
 app.use(morgan("dev"));
 // app.use(cors({ origin: "http://localhost:5173" }));
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 requests
+});
+
 // Routes
-app.use("/auth", authRoutes);
+app.use("/auth", limiter, authRoutes);
 
 app.get("/", (req, res) => {
   res.send(`${mongoose.connection.name} server is running`);
