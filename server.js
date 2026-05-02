@@ -10,6 +10,8 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 // import routes
 const authRoutes = require("./controllers/auth.route");
+const kycRoutes = require("./controllers/kyc.route")
+const verifyToken = require("./middleware/verifyToken")
 
 const app = express();
 app.use(express.json());
@@ -23,6 +25,7 @@ const limiter = rateLimit({
 
 // Routes
 app.use("/auth", limiter, authRoutes);
+app.use("/kyc", verifyToken, kycRoutes )
 
 app.get("/", (req, res) => {
   res.send(`${mongoose.connection.name} server is running`);
