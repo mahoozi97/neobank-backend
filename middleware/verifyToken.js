@@ -24,7 +24,17 @@ const verifyToken = (req, res, next) => {
     if (err) {
       return res.status(403).json({ message: "Invalid credientials" });
     }
+
+    if (user.status === "blocked") {
+      return res.status(403).json({ message: "Your user is blocked" });
+    }
+
+    if (user.status === "deleted") {
+      return res.status(403).json({ message: "Account no longer exists" });
+    }
+
     req.user = user;
+
     next();
   });
 };

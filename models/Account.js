@@ -20,7 +20,6 @@ const accountSchema = new mongoose.Schema(
     mobile: {
       type: String,
       unique: true,
-      required: true,
     },
     balance: {
       type: Number,

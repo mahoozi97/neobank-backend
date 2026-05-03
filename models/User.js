@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt")
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+    status: {
+      type: String,
+      enum: ["active", "blocked", "deleted"],
+      default: "active",
     },
   },
   { timestamps: true },

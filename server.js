@@ -11,7 +11,8 @@ const MONGODB_URI = process.env.MONGODB_URI;
 // import routes
 const authRoutes = require("./controllers/auth.route");
 const kycRoutes = require("./controllers/kyc.route");
-const adminRoutes = require("./controllers/admin.route")
+const adminRoutes = require("./controllers/admin.route");
+const accountRoutes = require("./controllers/account.route");
 const verifyToken = require("./middleware/verifyToken");
 const requireRole = require("./middleware/requireRole");
 
@@ -29,6 +30,7 @@ const limiter = rateLimit({
 app.use("/auth", limiter, authRoutes);
 app.use("/kyc", verifyToken, kycRoutes);
 app.use("/admin", verifyToken, requireRole("admin"), adminRoutes);
+app.use("/account", verifyToken, accountRoutes);
 
 app.get("/", (req, res) => {
   res.send(`${mongoose.connection.name} server is running`);
