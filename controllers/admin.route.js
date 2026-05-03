@@ -8,8 +8,13 @@ const User = require("../models/User");
 // get all kyc
 router.get("/kyc", async (req, res) => {
   try {
+    
     // const adminId = req.user._id // ← for audit log!
-    const allKyc = await KYC.find().sort({ createdAt: -1 });
+
+    const { status } = req.query;
+
+    const filter = status ? {status} :{}
+    const allKyc = await KYC.find(filter).sort({ createdAt: -1 });
 
     if (!allKyc) {
       return res.status(404).json({ error: "No [KYC] documents found!" });
