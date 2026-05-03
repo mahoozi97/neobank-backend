@@ -5,7 +5,7 @@ const User = require("../models/User");
 
 // The mount route is /admin
 
-// get all kyc
+// get all kyc and filtring by status
 router.get("/kyc", async (req, res) => {
   try {
     
@@ -16,7 +16,7 @@ router.get("/kyc", async (req, res) => {
     const filter = status ? {status} :{}
     const allKyc = await KYC.find(filter).sort({ createdAt: -1 });
 
-    if (!allKyc) {
+    if (!allKyc || allKyc.length === 0) {
       return res.status(404).json({ error: "No [KYC] documents found!" });
     }
 
