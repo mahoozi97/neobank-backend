@@ -33,9 +33,10 @@ router.post(
     try {
       const userId = req.user._id;
 
-      const foundCustomer = await KYC.findOne({ userId: userId }).select(
-        "status",
-      );
+      const foundCustomer = await KYC.findOne({
+        userId: userId,
+        status: { $ne: "rejected" }, // not equal "rejected"
+      }).select("status");
 
       // convert uploaded files to object
       const files = Object.values(req.files).flat();
