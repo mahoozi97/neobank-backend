@@ -5,6 +5,62 @@ const User = require("../models/User");
 
 // The mount route is /admin
 
+// get all kyc
+router.get("/kyc", async (req, res) => {
+  try {
+    // const adminId = req.user._id // ← for audit log!
+    const allKyc = await KYC.find().sort({ createdAt: -1 });
+
+    if (!allKyc) {
+      return res.status(404).json({ error: "No [KYC] documents found!" });
+    }
+
+    console.log("✅ [KYC] fitched all documents successfully", allKyc);
+    res.status(200).json(allKyc);
+  } catch (error) {
+    console.error("❌ [KYC] Failed to fetch all documents", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// get kyc by _id
+router.get("/kyc/:kycId", async (req, res) => {
+  try {
+    // const adminId = req.user._id // ← for audit log!
+    const kycId = req.params.kycId;
+    const Kyc = await KYC.findById(kycId);
+
+    if (!Kyc) {
+      return res.status(404).json({ error: "KYC Document not found!" });
+    }
+
+    console.log("✅ Fitched KYC document successfully", Kyc);
+    res.status(200).json(Kyc);
+  } catch (error) {
+    console.error("❌ Failed to fetch KYC document", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// get kyc by userId
+router.get("/kyc/user/:userId", async (req, res) => {
+  try {
+    // const adminId = req.user._id // ← for audit log!
+    const userId = req.params.userId;
+    const userKyc = await KYC.findOne({ userId: userId });
+
+    if (!userKyc) {
+      return res.status(404).json({ error: "KYC Document not found!" });
+    }
+
+    console.log("✅ Fitched KYC document successfully", userKyc);
+    res.status(200).json(userKyc);
+  } catch (error) {
+    console.error("❌ Failed to fetch KYC document", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // approve KYC
 router.put("/kyc/:kycId/approve", async (req, res) => {
   console.log(req.params.kycId);
@@ -13,7 +69,7 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
   try {
     // const adminId = req.user._id // ← for audit log!
     const kycId = req.params.kycId;
-    
+
     const kyc = await KYC.findByIdAndUpdate(
       kycId,
       { status: "approved" },
@@ -68,14 +124,5 @@ router.put("/kyc/:kycId/reject", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// get all kyc
-// router.get("/")
-
-// get kyc by _id
-// router.get("/")
-
-// get kyc by userId
-// router.get("/")
 
 module.exports = router;
