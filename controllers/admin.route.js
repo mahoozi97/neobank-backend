@@ -8,17 +8,17 @@ const Account = require("../models/Account");
 
 //  - - - -  - -  - - -  - - - - ↓ Account ↓ - - - - -  - -  - - - - -  - - - -
 
+
 // get all Accounts and filtring by status & type
 router.get("/accounts", async (req, res) => {
   try {
-    // const adminId = req.user._id // ← for audit log!
     const { status, type } = req.query;
 
     const filter = status ? { status } : type ? { type } : {};
     const accounts = await Account.find(filter).sort({ createdAt: -1 });
 
     if (!accounts || accounts.length === 0) {
-      return res.status(404).json({ error: "No accounts found!" });
+      return res.status(404).json({ error: "Accounts not found!" });
     }
 
     console.log("✅ Fitched all accounts successfully", accounts);
@@ -29,15 +29,34 @@ router.get("/accounts", async (req, res) => {
   }
 });
 
+// get Account by ID
 router.get("/account/:accountId", async (req, res) => {
   try {
-    // const adminId = req.user._id // ← for audit log!
     const accountId = req.params.accountId;
 
     const foundAccount = await Account.findById(accountId);
 
     if (!foundAccount) {
-      return res.status(404).json({ error: "No account found!" });
+      return res.status(404).json({ error: "Account not found!" });
+    }
+
+    console.log("✅ Fitched account successfully", foundAccount);
+    res.status(200).json(foundAccount);
+  } catch (error) {
+    console.error("❌ Failed to fetch account", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// get Account by User ID
+router.get("/account/user/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const foundAccount = await Account.find({ userId: userId });
+
+    if (!foundAccount || foundAccount === 0) {
+      return res.status(404).json({ error: "Account not found!" });
     }
 
     console.log("✅ Fitched account successfully", foundAccount);
