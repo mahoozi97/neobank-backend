@@ -2,8 +2,53 @@ const router = require("express").Router();
 const mongoose = require("mongoose");
 const KYC = require("../models/KYC");
 const User = require("../models/User");
+const Account = require("../models/Account");
 
 // The mount route is /admin
+
+//  - - - -  - -  - - -  - - - - ↓ Account ↓ - - - - -  - -  - - - - -  - - - -
+
+// get all Accounts and filtring by status & type
+router.get("/accounts", async (req, res) => {
+  try {
+    // const adminId = req.user._id // ← for audit log!
+    const { status, type } = req.query;
+
+    const filter = status ? { status } : type ? { type } : {};
+    const accounts = await Account.find(filter).sort({ createdAt: -1 });
+
+    if (!accounts || accounts.length === 0) {
+      return res.status(404).json({ error: "No accounts found!" });
+    }
+
+    console.log("✅ Fitched all accounts successfully", accounts);
+    res.status(200).json(accounts);
+  } catch (error) {
+    console.error("❌ Failed to fetch all accounts", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/account/:accountId", async (req, res) => {
+  try {
+    // const adminId = req.user._id // ← for audit log!
+    const accountId = req.params.accountId;
+
+    const foundAccount = await Account.findById(accountId);
+
+    if (!foundAccount) {
+      return res.status(404).json({ error: "No account found!" });
+    }
+
+    console.log("✅ Fitched account successfully", foundAccount);
+    res.status(200).json(foundAccount);
+  } catch (error) {
+    console.error("❌ Failed to fetch account", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//  - - - -  - -  - - -  - - - - ↓ KYC ↓ - - - - -  - -  - - - - -  - - - -
 
 // get all kyc and filtring by status
 router.get("/kyc", async (req, res) => {
