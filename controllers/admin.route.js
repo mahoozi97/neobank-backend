@@ -2,8 +2,75 @@ const router = require("express").Router();
 const mongoose = require("mongoose");
 const KYC = require("../models/KYC");
 const User = require("../models/User");
+const Account = require("../models/Account");
 
 // The mount route is /admin
+
+//  - - - -  - -  - - -  - - - - ↓ Account ↓ - - - - -  - -  - - - - -  - - - -
+
+// get all Accounts and filtring by status & type
+router.get("/accounts", async (req, res) => {
+  try {
+    const { status, type } = req.query;
+
+    const filteredParams = {};
+
+    if (status) filteredParams.status = status;
+    if (type) filteredParams.type = type;
+    // const filter = status ? { status } : type ? { type } : {};
+    const accounts = await Account.find(filteredParams).sort({ createdAt: -1 });
+
+    if (!accounts || accounts.length === 0) {
+      return res.status(404).json({ error: "Accounts not found!" });
+    }
+
+    console.log("✅ Fitched all accounts successfully", accounts);
+    res.status(200).json(accounts);
+  } catch (error) {
+    console.error("❌ Failed to fetch all accounts", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// get Account by ID
+router.get("/account/:accountId", async (req, res) => {
+  try {
+    const accountId = req.params.accountId;
+
+    const foundAccount = await Account.findById(accountId);
+
+    if (!foundAccount) {
+      return res.status(404).json({ error: "Account not found!" });
+    }
+
+    console.log("✅ Fitched account successfully", foundAccount);
+    res.status(200).json(foundAccount);
+  } catch (error) {
+    console.error("❌ Failed to fetch account", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// get Account by User ID
+router.get("/account/user/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const foundAccount = await Account.find({ userId: userId });
+
+    if (!foundAccount || foundAccount === 0) {
+      return res.status(404).json({ error: "Account not found!" });
+    }
+
+    console.log("✅ Fitched account successfully", foundAccount);
+    res.status(200).json(foundAccount);
+  } catch (error) {
+    console.error("❌ Failed to fetch account", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//  - - - -  - -  - - -  - - - - ↓ KYC ↓ - - - - -  - -  - - - - -  - - - -
 
 // get all kyc and filtring by status
 router.get("/kyc", async (req, res) => {
