@@ -8,14 +8,17 @@ const Account = require("../models/Account");
 
 //  - - - -  - -  - - -  - - - - ↓ Account ↓ - - - - -  - -  - - - - -  - - - -
 
-
 // get all Accounts and filtring by status & type
 router.get("/accounts", async (req, res) => {
   try {
     const { status, type } = req.query;
 
-    const filter = status ? { status } : type ? { type } : {};
-    const accounts = await Account.find(filter).sort({ createdAt: -1 });
+    const filteredParams = {};
+
+    if (status) filteredParams.status = status;
+    if (type) filteredParams.type = type;
+    // const filter = status ? { status } : type ? { type } : {};
+    const accounts = await Account.find(filteredParams).sort({ createdAt: -1 });
 
     if (!accounts || accounts.length === 0) {
       return res.status(404).json({ error: "Accounts not found!" });
