@@ -53,5 +53,18 @@ userSchema.pre("findOneAndUpdate", async function () {
   }
 });
 
+userSchema.pre("save", async function (next) {
+  if (this.name) {
+    this.name = this.name.toUpperCase();
+  }
+});
+
+userSchema.pre("findOneAndUpdate", async function () {
+  const update = this.getUpdate();
+  if (update.name) {
+    update.name = update.name.toUpperCase();
+  }
+});
+
 const User = mongoose.model("User", userSchema);
 module.exports = User;
