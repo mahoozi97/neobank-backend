@@ -30,7 +30,7 @@ const limiter = rateLimit({
 app.use("/auth", limiter, authRoutes);
 app.use("/kyc", verifyToken, kycRoutes);
 app.use("/admin", verifyToken, requireRole("admin"), adminRoutes);
-app.use("/account", verifyToken, accountRoutes);
+app.use("/accounts", verifyToken, accountRoutes);
 
 app.get("/", (req, res) => {
   res.send(`${mongoose.connection.name} server is running`);

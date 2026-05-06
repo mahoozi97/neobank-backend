@@ -7,6 +7,10 @@ const accountSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    nickname: {
+      type: String,
+      required: true,
+    },
     accountNumber: {
       type: String,
       unique: true,
@@ -19,7 +23,7 @@ const accountSchema = new mongoose.Schema(
     },
     mobile: {
       type: String,
-      unique: true,
+      required: true,
     },
     balance: {
       type: Number,
