@@ -132,4 +132,79 @@ router.post("/lookup", async (req, res) => {
   }
 });
 
+// activate account
+router.patch("/:accountId/activate", async (req, res) => {
+  try {
+    const accountId = req.params.accountId;
+
+    const updatedAccount = await Account.findByIdAndUpdate(
+      accountId,
+      {
+        status: "active",
+      },
+      { new: true },
+    );
+
+    if (!updatedAccount) {
+      return res.status(404).json({ error: "Account not found." });
+    }
+
+    console.log("✅ Account status updated to Active");
+    res.status(200).json({ message: "Account has been successfully activate." });
+  } catch (error) {
+    console.error("❌ Failed to active account", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// freeze account
+router.patch("/:accountId/freeze", async (req, res) => {
+  try {
+    const accountId = req.params.accountId;
+
+    const updatedAccount = await Account.findByIdAndUpdate(
+      accountId,
+      {
+        status: "frozen",
+      },
+      { new: true },
+    );
+
+    if (!updatedAccount) {
+      return res.status(404).json({ error: "Account not found." });
+    }
+
+    console.log("✅ Account status updated to Frozen");
+    res.status(200).json({ message: "Account has been successfully frozen." });
+  } catch (error) {
+    console.error("❌ Failed to freeze account", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// close account
+router.patch("/:accountId/close", async (req, res) => {
+  try {
+    const accountId = req.params.accountId;
+
+    const updatedAccount = await Account.findByIdAndUpdate(
+      accountId,
+      {
+        status: "closed",
+      },
+      { new: true },
+    );
+
+    if (!updatedAccount) {
+      return res.status(404).json({ error: "Account not found." });
+    }
+
+    console.log("✅ Account status updated to Closed");
+    res.status(200).json({ message: "Account has been successfully closed." });
+  } catch (error) {
+    console.error("❌ Failed to close account", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
