@@ -196,4 +196,32 @@ router.put("/kyc/:kycId/reject", async (req, res) => {
   }
 });
 
+
+//  - - - -  - -  - - -  - - - - ↓ BLOCK USER ↓ - - - - -  - -  - - - - -  - - - -
+
+// block user
+router.patch("/users/:userId/block", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        status: "blocked",
+      },
+      { new: true },
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    console.log("✅ User status updated to Blocked");
+    res.status(200).json({ message: "User has been successfully blocked." });
+  } catch (error) {
+    console.error("❌ Failed to block user", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
