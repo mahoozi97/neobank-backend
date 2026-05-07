@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET_KEY;
 const validator = require("validator");
+const createAuditLog = require("../utils/auditLog");
 
 router.post("/sign-up", async (req, res) => {
   try {
@@ -48,12 +49,13 @@ router.post("/sign-in", async (req, res) => {
       return res.status(401).json({ error: "email or password incorrect" });
     }
 
-    const validPassword = await bcrypt.compare(
-      password,
-      foundUser.password,
-    );
+    const validPassword = await bcrypt.compare(password, foundUser.password);
 
     if (!validPassword) {
+      const metadata = {
+        reason: "wrong password",
+      };
+      await createAuditLog(req, foundUser._id, "failed_login", metadata);
       return res.status(401).json({ error: "email or password incorrect" });
     }
 
@@ -64,6 +66,7 @@ router.post("/sign-in", async (req, res) => {
     const token = jwt.sign({ ...payload }, JWT_SECRET, { expiresIn: "24h" });
 
     console.log("✅ Signed in successfully");
+    await createAuditLog(req, foundUser._id, "login", metadata={});
     res.status(200).json({ token, user: payload });
   } catch (error) {
     console.log("❌ Sign in failed. Please try again: ", error);
