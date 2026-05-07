@@ -4,6 +4,26 @@ const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 
+router.get("/", async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { status } = req.query;
+
+    const filter = status ? { userId: userId, status } : { userId: userId };
+    const allTransactions = await Transaction.find(filter).populate("toAccount fromAccount", "nickname");
+
+    if (!allTransactions) {
+      return res.status(404).json({ error: "Transactions not found" });
+    }
+
+    console.log("✅ Fitched transactions successfully", allTransactions);
+    res.status(200).json(allTransactions);
+  } catch (error) {
+    console.error("❌ Failed to fetch transactions", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // transfer amount
 router.post("/transfer", async (req, res) => {
   const session = await mongoose.startSession();
