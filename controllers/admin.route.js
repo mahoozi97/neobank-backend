@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const KYC = require("../models/KYC");
 const User = require("../models/User");
 const Account = require("../models/Account");
+const Transaction = require("../models/Transaction");
 
 // The mount route is /admin
 
@@ -196,7 +197,6 @@ router.put("/kyc/:kycId/reject", async (req, res) => {
   }
 });
 
-
 //  - - - -  - -  - - -  - - - - ↓ BLOCK USER ↓ - - - - -  - -  - - - - -  - - - -
 
 // block user
@@ -220,6 +220,41 @@ router.patch("/users/:userId/block", async (req, res) => {
     res.status(200).json({ message: "User has been successfully blocked." });
   } catch (error) {
     console.error("❌ Failed to block user", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//  - - - -  - -  - - -  - - - - ↓ TRANSACTIONS ↓ - - - - -  - -  - - - - -  - - - -
+
+// get all transactions
+router.get("/transactions", async (req, res) => {
+  try {
+    const { status, userId } = req.query;
+    const filter = {};
+
+    if (status) filter.status = status;
+    if (userId) filter.userId = userId;
+    const allTransactions = await Transaction.find(filter).sort({
+      createdAt: -1,
+    });
+
+    if (!allTransactions) {
+      return res.status(404).json({ error: "Transactions not found!" });
+    }
+
+    const formattedTransactions = allTransactions.map((transaction) => {
+      const obj = transaction.toObject();
+      obj.amount = new Intl.NumberFormat("en-BH", {
+        minimumFractionDigits: 3,
+      }).format(obj.amount);
+      obj.amount += " BHD";
+      return obj;
+    });
+
+    console.log("✅ Fitched transactions successfully", formattedTransactions);
+    res.status(200).json(formattedTransactions);
+  } catch (error) {
+    console.error("❌ Failed to fetch all transactions", error);
     res.status(500).json({ error: error.message });
   }
 });
