@@ -13,6 +13,7 @@ const authRoutes = require("./controllers/auth.route");
 const kycRoutes = require("./controllers/kyc.route");
 const adminRoutes = require("./controllers/admin.route");
 const accountRoutes = require("./controllers/account.route");
+const transactionRoutes = require("./controllers/transaction.route");
 const verifyToken = require("./middleware/verifyToken");
 const requireRole = require("./middleware/requireRole");
 
@@ -31,6 +32,8 @@ app.use("/auth", limiter, authRoutes);
 app.use("/kyc", verifyToken, kycRoutes);
 app.use("/admin", verifyToken, requireRole("admin"), adminRoutes);
 app.use("/accounts", verifyToken, accountRoutes);
+app.use("/transactions", verifyToken, transactionRoutes);
+
 
 app.get("/", (req, res) => {
   res.send(`${mongoose.connection.name} server is running`);

@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     fromAccount: {
       // Account Id
       type: mongoose.Schema.Types.ObjectId,
@@ -23,7 +28,7 @@ const transactionSchema = new mongoose.Schema(
     currency: {
       type: String,
       default: "BHD",
-      // enum: ["BHD", "USD", "EUR"],
+      enum: ["BHD"],
     },
     type: {
       type: String,
@@ -32,13 +37,21 @@ const transactionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "completed", "failed"],
-      required: true,
+      enum: ["pending", "success", "rejected"],
+      default: "pending",
     },
     description: {
+      type: String,
+      // optional
+    },
+    rejectionReason: {
       type: String,
       // optional
     },
   },
   { timestamps: true },
 );
+
+const Transaction = mongoose.model("Transaction", transactionSchema);
+
+module.exports = Transaction;
