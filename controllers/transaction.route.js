@@ -47,18 +47,50 @@ router.post("/transfer", async (req, res) => {
     const sender = await User.findById(userId).select("kycStatus");
 
     if (sender.kycStatus !== "verified" && amount > 10) {
-      return res
-        .status(403)
-        .json({
-          error:
-            "Transfer limit for unverified user is 10 BHD. Please complete KYC verification to increase your limit.",
-        });
+      return res.status(403).json({
+        error:
+          "Transfer limit for unverified user is 10 BHD. Please complete KYC verification to increase your limit.",
+      });
     }
 
     if (amount < 0.1) {
       return res
         .status(400)
         .json({ error: "The amount is less than the minimum" });
+    }
+
+    const now = new Date();
+    const startOfDay = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
+    const endOfDay = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+    );
+
+    // aggregate!!
+    const transfer = await Transaction.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          createdAt: { $gte: startOfDay, $lt: endOfDay },
+          status: "success",
+        },
+      },
+      {
+        $group: {
+          _id: "$userId",
+          totalAmount: { $sum: "$amount" },
+        },
+      },
+    ]);
+
+    if ((transfer[0].totalAmount += amount) > 3000) {
+      return res
+        .status(403)
+        .json({
+          error:
+            "Transfer declined. This amount would exceed your daily transfer limit.",
+        });
     }
 
     const newTransaction = await Transaction.create(
