@@ -4,20 +4,32 @@ const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 
+// get by user Id and filtred by status
 router.get("/", async (req, res) => {
   try {
     const userId = req.user._id;
     const { status } = req.query;
 
     const filter = status ? { userId: userId, status } : { userId: userId };
-    const allTransactions = await Transaction.find(filter).populate("toAccount fromAccount", "nickname");
+    const allTransactions = await Transaction.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("toAccount fromAccount", "nickname");
 
     if (!allTransactions) {
       return res.status(404).json({ error: "Transactions not found" });
     }
 
-    console.log("✅ Fitched transactions successfully", allTransactions);
-    res.status(200).json(allTransactions);
+    const formattedTransactions = allTransactions.map((transaction) => {
+      const obj = transaction.toObject();
+      obj.amount = new Intl.NumberFormat("en-BH", {
+        minimumFractionDigits: 3,
+      }).format(obj.amount);
+      obj.amount += " BHD";
+      return obj;
+    });
+
+    console.log("✅ Fitched transactions successfully", formattedTransactions);
+    res.status(200).json(formattedTransactions);
   } catch (error) {
     console.error("❌ Failed to fetch transactions", error);
     res.status(500).json({ error: error.message });
@@ -106,10 +118,14 @@ router.post("/transfer", async (req, res) => {
     await newTransaction[0].save({ session });
     await session.commitTransaction();
 
+    const formattedAmount = new Intl.NumberFormat("en-BH", {
+      minimumFractionDigits: 3,
+    }).format(amount);
+
     const transferDetails = {
       from: from.nickname,
       to: to.nickname,
-      amount: `BD ${amount}`,
+      amount: `${formattedAmount} BHD`,
       status: newTransaction[0].status,
       ref: newTransaction[0]._id,
     };
