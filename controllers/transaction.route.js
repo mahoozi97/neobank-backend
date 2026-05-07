@@ -48,13 +48,16 @@ router.post("/transfer", async (req, res) => {
 
     if (sender.kycStatus !== "verified" && amount > 10) {
       return res
-        .status(409)
-        .json({ error: "You are not qualified to complete this proccess" });
+        .status(403)
+        .json({
+          error:
+            "Transfer limit for unverified user is 10 BHD. Please complete KYC verification to increase your limit.",
+        });
     }
 
     if (amount < 0.1) {
       return res
-        .status(409)
+        .status(400)
         .json({ error: "The amount is less than the minimum" });
     }
 
@@ -90,7 +93,7 @@ router.post("/transfer", async (req, res) => {
         status: "rejected",
         rejectionReason: reasonMessage,
       });
-      return res.status(404).json({ error: reasonMessage });
+      return res.status(422).json({ error: reasonMessage });
     }
 
     const to = await Account.findOneAndUpdate(
@@ -111,7 +114,7 @@ router.post("/transfer", async (req, res) => {
         status: "rejected",
         rejectionReason: reasonMessage,
       });
-      return res.status(404).json({ error: reasonMessage });
+      return res.status(422).json({ error: reasonMessage });
     }
 
     newTransaction[0].status = "success";
