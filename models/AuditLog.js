@@ -10,17 +10,18 @@ const auditLogSchema = new mongoose.Schema(
     action: {
       type: String,
       enum: [
-        "login",
-        "logout",
+        "login",//
+        "open_account",//
         "transfer",
-        "freeze_account",
-        "unfeeze-account",
+        "freeze_account",//
+        "unfreeze_account",//
+        "close_account",//
         "kyc_upload",
         "kyc_approved",
         "kyc_rejected",
-        "blocked-user",
-        "activate-user",
-        "deleted-user",
+        "blocked_user",
+        "activate_user",
+        "deleted_user",
         "failed_login",
       ],
       required: true,
