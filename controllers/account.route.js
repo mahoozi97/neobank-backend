@@ -4,7 +4,6 @@ const { customAlphabet } = require("nanoid");
 const alphabet = "0123456789";
 const nanoidShort = customAlphabet(alphabet, 12);
 const createAuditLog = require("../utils/auditLog");
-const mongoose = require("mongoose");
 
 // mount route ← /account
 

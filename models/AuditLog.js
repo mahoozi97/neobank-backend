@@ -16,7 +16,7 @@ const auditLogSchema = new mongoose.Schema(
         "freeze_account",//
         "unfreeze_account",//
         "close_account",//
-        "kyc_upload",
+        "kyc_upload",//
         "kyc_approved",
         "kyc_rejected",
         "blocked_user",
