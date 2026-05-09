@@ -45,6 +45,20 @@ router.post("/transfer", async (req, res) => {
     const userId = req.user._id;
     const { fromAccount, toAccount, amount } = req.body;
     const metadata = {};
+    metadata.transferDetails = {
+      from: fromAccount,
+      to: toAccount,
+      amount: amount,
+    };
+
+    if (fromAccount === toAccount) {
+      return res
+        .status(400)
+        .json({
+          error:
+            "Transfer failed: sender and recipient accounts cannot be the same.",
+        });
+    }
 
     const sender = await User.findById(userId).select("kycStatus");
 
@@ -128,14 +142,9 @@ router.post("/transfer", async (req, res) => {
         status: "rejected",
         rejectionReason: reasonMessage,
       });
-      metadata.transferDetails = {
-        from: fromAccount,
-        to: toAccount,
-        amount: amount,
-        status: "rejected",
-        reasonMessage: reasonMessage,
-        ref: transaction._id,
-      };
+      metadata.transferDetails.status = "rejected";
+      metadata.transferDetails.rejectionReason = reasonMessage;
+      metadata.transferDetails.ref = transaction._id;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       await session.abortTransaction();
       return res.status(422).json({ error: reasonMessage });
@@ -158,14 +167,9 @@ router.post("/transfer", async (req, res) => {
         status: "rejected",
         rejectionReason: reasonMessage,
       });
-      metadata.transferDetails = {
-        from: fromAccount,
-        to: toAccount,
-        amount: amount,
-        status: "rejected",
-        reasonMessage: reasonMessage,
-        ref: transaction._id,
-      };
+      metadata.transferDetails.status = "rejected";
+      metadata.transferDetails.rejectionReason = reasonMessage;
+      metadata.transferDetails.ref = transaction._id;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       await session.abortTransaction();
       return res.status(422).json({ error: reasonMessage });
@@ -173,7 +177,10 @@ router.post("/transfer", async (req, res) => {
 
     newTransaction[0].status = "success";
     await newTransaction[0].save({ session });
-    await session.commitTransaction();
+
+    metadata.transferDetails.status = "success";
+    metadata.transferDetails.ref = newTransaction[0]._id;
+    await createAuditLog(req, userId, "transfer", metadata, session);
 
     const formattedAmount = new Intl.NumberFormat("en-BH", {
       minimumFractionDigits: 3,
@@ -186,6 +193,9 @@ router.post("/transfer", async (req, res) => {
       status: newTransaction[0].status,
       ref: newTransaction[0]._id,
     };
+
+    await session.commitTransaction();
+    console.log("✅ Transfer successfully", transferDetails);
     res.status(200).json(transferDetails);
   } catch (error) {
     await session.abortTransaction();
