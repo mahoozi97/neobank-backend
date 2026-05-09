@@ -13,6 +13,7 @@ const auditLogSchema = new mongoose.Schema(
         "login",//
         "open_account",//
         "transfer",
+        "transfer_failed",
         "freeze_account",//
         "unfreeze_account",//
         "close_account",//

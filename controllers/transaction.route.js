@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
+const createAuditLog = require("../utils/auditLog");
 
 // get by user Id and filtred by status
 router.get("/", async (req, res) => {
@@ -43,6 +44,7 @@ router.post("/transfer", async (req, res) => {
   try {
     const userId = req.user._id;
     const { fromAccount, toAccount, amount } = req.body;
+    const metadata = {};
 
     const sender = await User.findById(userId).select("kycStatus");
 
@@ -68,10 +70,11 @@ router.post("/transfer", async (req, res) => {
     );
 
     // aggregate!!
-    const transfer = await Transaction.aggregate([
+    const transfers = await Transaction.aggregate([
       {
         $match: {
           userId: new mongoose.Types.ObjectId(userId),
+          fromAccount: fromAccount,
           createdAt: { $gte: startOfDay, $lt: endOfDay },
           status: "success",
         },
@@ -84,13 +87,13 @@ router.post("/transfer", async (req, res) => {
       },
     ]);
 
-    if ((transfer[0].totalAmount += amount) > 3000) {
-      return res
-        .status(403)
-        .json({
+    if (transfers.length === 1) {
+      if ((transfers[0].totalAmount += amount) > 3000) {
+        return res.status(403).json({
           error:
             "Transfer declined. This amount would exceed your daily transfer limit.",
         });
+      }
     }
 
     const newTransaction = await Transaction.create(
@@ -106,6 +109,7 @@ router.post("/transfer", async (req, res) => {
     const from = await Account.findOneAndUpdate(
       {
         _id: fromAccount,
+        userId: userId,
         balance: { $gte: amount }, // if amount >= balance
         status: { $nin: ["closed", "frozen"] }, // not equal closed or frozen
       },
@@ -114,17 +118,26 @@ router.post("/transfer", async (req, res) => {
     );
 
     if (!from) {
-      await session.abortTransaction();
       const reasonMessage =
         "Transfer failed: insufficient balance or account is unavailable";
-      await Transaction.create({
+      const transaction = await Transaction.create({
         userId,
-        fromAccount,
-        toAccount,
+        fromAccount: fromAccount,
+        toAccount: toAccount,
         amount,
         status: "rejected",
         rejectionReason: reasonMessage,
       });
+      metadata.transferDetails = {
+        from: fromAccount,
+        to: toAccount,
+        amount: amount,
+        status: "rejected",
+        reasonMessage: reasonMessage,
+        ref: transaction._id,
+      };
+      await createAuditLog(req, userId, "transfer_failed", metadata);
+      await session.abortTransaction();
       return res.status(422).json({ error: reasonMessage });
     }
 
@@ -135,17 +148,26 @@ router.post("/transfer", async (req, res) => {
     );
 
     if (!to) {
-      await session.abortTransaction();
       const reasonMessage =
         "Transfer failed: recipient account is closed or does not exist";
-      await Transaction.create({
+      const transaction = await Transaction.create({
         userId,
-        fromAccount,
-        toAccount,
+        fromAccount: fromAccount,
+        toAccount: toAccount,
         amount,
         status: "rejected",
         rejectionReason: reasonMessage,
       });
+      metadata.transferDetails = {
+        from: fromAccount,
+        to: toAccount,
+        amount: amount,
+        status: "rejected",
+        reasonMessage: reasonMessage,
+        ref: transaction._id,
+      };
+      await createAuditLog(req, userId, "transfer_failed", metadata);
+      await session.abortTransaction();
       return res.status(422).json({ error: reasonMessage });
     }
 
