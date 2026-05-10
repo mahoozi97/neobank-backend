@@ -10,20 +10,20 @@ const auditLogSchema = new mongoose.Schema(
     action: {
       type: String,
       enum: [
-        "login",//
-        "open_account",//
+        "login",
+        "failed_login",
+        "open_account",
         "transfer",
         "transfer_failed",
-        "freeze_account",//
-        "unfreeze_account",//
-        "close_account",//
-        "kyc_upload",//
+        "freeze_account",
+        "unfreeze_account",
+        "kyc_upload",
         "kyc_approved",
         "kyc_rejected",
         "blocked_user",
         "activate_user",
         "deleted_user",
-        "failed_login",
+        "close_account",
       ],
       required: true,
     },
@@ -41,8 +41,6 @@ const auditLogSchema = new mongoose.Schema(
 
 const AuditLog = mongoose.model("AuditLog", auditLogSchema);
 module.exports = AuditLog;
-
-
 
 // // 1️⃣ Login
 // {
