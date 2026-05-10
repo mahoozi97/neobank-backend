@@ -66,8 +66,8 @@ router.post("/sign-in", async (req, res) => {
     const token = jwt.sign({ ...payload }, JWT_SECRET, { expiresIn: "24h" });
 
     console.log("✅ Signed in successfully");
-    await createAuditLog(req, foundUser._id, "login", metadata={});
-    res.status(200).json({ token, user: payload });
+    await createAuditLog(req, foundUser._id, "login", (metadata = {}));
+    res.status(200).json(token);
   } catch (error) {
     console.log("❌ Sign in failed. Please try again: ", error);
     res.status(500).json({ error: error.message });
