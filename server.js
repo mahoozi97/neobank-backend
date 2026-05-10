@@ -20,7 +20,7 @@ const requireRole = require("./middleware/requireRole");
 const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
-// app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "http://localhost:5173" }));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
