@@ -52,12 +52,10 @@ router.post("/transfer", async (req, res) => {
     };
 
     if (fromAccount === toAccount) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Transfer failed: sender and recipient accounts cannot be the same.",
-        });
+      return res.status(400).json({
+        error:
+          "Transfer failed: sender and recipient accounts cannot be the same.",
+      });
     }
 
     const sender = await User.findById(userId).select("kycStatus");
@@ -88,7 +86,7 @@ router.post("/transfer", async (req, res) => {
       {
         $match: {
           userId: new mongoose.Types.ObjectId(userId),
-          fromAccount: fromAccount,
+          fromAccount: new mongoose.Types.ObjectId(fromAccount),
           createdAt: { $gte: startOfDay, $lt: endOfDay },
           status: "success",
         },
@@ -101,14 +99,30 @@ router.post("/transfer", async (req, res) => {
       },
     ]);
 
+    const declinedMessage =
+      "Transfer declined. This amount would exceed your daily transfer limit.";
+
     if (transfers.length === 1) {
-      if ((transfers[0].totalAmount += amount) > 3000) {
+      const totalSpentToday = (transfers[0].totalAmount += amount);
+      console.log(totalSpentToday);
+      if (sender.kycStatus !== "verified" && totalSpentToday > 100) {
         return res.status(403).json({
-          error:
-            "Transfer declined. This amount would exceed your daily transfer limit.",
+          error: `${declinedMessage} Please complete KYC verification to increase your daily limit.`,
+        });
+      }
+
+      if (totalSpentToday > 3000) {
+        return res.status(403).json({
+          error: declinedMessage,
         });
       }
     }
+
+      if (amount > 3000) {
+        return res.status(403).json({
+          error: declinedMessage,
+        });
+      }
 
     const newTransaction = await Transaction.create(
       [
