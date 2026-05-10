@@ -4,6 +4,7 @@ const KYC = require("../models/KYC");
 const User = require("../models/User");
 const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
+const createAuditLog = require("../utils/auditLog");
 
 // The mount route is /admin
 
@@ -139,7 +140,8 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    // const adminId = req.user._id // ← for audit log!
+    const adminId = req.user._id;
+    const adminName = req.user.name;
     const kycId = req.params.kycId;
 
     const kyc = await KYC.findByIdAndUpdate(
@@ -155,7 +157,7 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       kyc.userId,
-      { kycStatus: "verified" },
+      { $set: { status: "approved" } },
       { new: true, session }, // ← pass session
     );
 
@@ -163,6 +165,12 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
       await session.abortTransaction(); // ❌ Any failure → rollback both
       return res.status(404).json({ error: "User not found" });
     }
+
+    const metadata = {
+      targetUserId: kyc.userId,
+      reviewedBy: `Admin - ${adminName}`,
+    };
+    await createAuditLog(req, adminId, "kyc_approved", metadata, session);
 
     await session.commitTransaction(); // ✅ Both succeed → save
     res.status(200).json({ message: "✅ KYC approved successfully" });
@@ -178,17 +186,25 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
 // Reject KYC
 router.put("/kyc/:kycId/reject", async (req, res) => {
   try {
-    // const adminId = req.user._id // ← for audit log!
+    const adminId = req.user._id;
+    const adminName = req.user.name;
     const kycId = req.params.kycId;
+    // { $set: { status: "active" } }
     const kyc = await KYC.findByIdAndUpdate(
       kycId,
-      { status: "rejected", comment: req.body.comment },
+      { $set: { status: "rejected", comment: req.body.comment } },
       { new: true },
     );
 
     if (!kyc) {
       return res.status(404).json({ error: "KYC Document not found!" });
     }
+
+    const metadata = {
+      targetUserId: kyc.userId,
+      reviewedBy: `Admin - ${adminName}`,
+    };
+    await createAuditLog(req, adminId, "kyc_rejected", metadata, session);
 
     res.status(200).json({ message: "✅ KYC rejected successfully" });
   } catch (error) {
@@ -202,12 +218,14 @@ router.put("/kyc/:kycId/reject", async (req, res) => {
 // block user
 router.patch("/users/:userId/block", async (req, res) => {
   try {
+    const adminId = req.user._id;
+    const adminName = req.user.name;
     const userId = req.params.userId;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        status: "blocked",
+        $set: { status: "blocked" },
       },
       { new: true },
     );
@@ -215,6 +233,12 @@ router.patch("/users/:userId/block", async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found." });
     }
+
+    const metadata = {
+      targetUserId: userId,
+      reviewedBy: `Admin - ${adminName}`,
+    };
+    await createAuditLog(req, adminId, "blocked_user", metadata);
 
     console.log("✅ User status updated to Blocked");
     res.status(200).json({ message: "User has been successfully blocked." });
