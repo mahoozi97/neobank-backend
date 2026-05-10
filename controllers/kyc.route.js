@@ -5,6 +5,15 @@ const multer = require("multer");
 const upload = multer({ storage: uploadDocuments });
 const KYC = require("../models/KYC");
 const cloudinary = require("cloudinary").v2;
+const createAuditLog = require("../utils/auditLog");
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
 
 // helper: delete uploaded files from Cloudinary
 const deleteFiles = async (files) => {
@@ -72,17 +81,36 @@ router.post(
         { type: "passport", url: req.files["passport"][0].path },
       ];
 
-      const newCustomer = await KYC.create({
+      const uploadedDocuments = await KYC.create({
         userId: userId,
         documents: documents,
       });
 
-      res.status(201).json(newCustomer);
+      const metadata = {
+        documents: [
+          {
+            type: "front ID",
+            size: formatFileSize(req.files["frontId"][0].size),
+          },
+          {
+            type: "back ID",
+            size: formatFileSize(req.files["backId"][0].size),
+          },
+          {
+            type: "passport",
+            size: formatFileSize(req.files["passport"][0].size),
+          },
+        ],
+      };
+      await createAuditLog(req, userId, "kyc_upload", metadata);
+
+      console.log("✅ Documents uploaded successfully", uploadedDocuments);
+      res.status(201).json(uploadedDocuments);
     } catch (error) {
       if (req.files) {
         await deleteFiles(Object.values(req.files).flat());
       }
-      console.log("❌ Upload image failed. Please try again: ", error);
+      console.log("❌ Upload Documents failed. Please try again: ", error);
       res.status(500).json({ error: error.message });
     }
   },
