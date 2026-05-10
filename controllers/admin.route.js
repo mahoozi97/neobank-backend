@@ -248,6 +248,39 @@ router.patch("/users/:userId/block", async (req, res) => {
   }
 });
 
+// activate user
+router.patch("/users/:userId/active", async (req, res) => {
+  try {
+    const adminId = req.user._id;
+    const adminName = req.user.name;
+    const userId = req.params.userId;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: { status: "active" },
+      },
+      { new: true },
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const metadata = {
+      targetUserId: userId,
+      reviewedBy: `Admin - ${adminName}`,
+    };
+    await createAuditLog(req, adminId, "activate_user", metadata);
+
+    console.log("✅ User status updated to activated");
+    res.status(200).json({ message: "User has been successfully activated." });
+  } catch (error) {
+    console.error("❌ Failed to active user", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 //  - - - -  - -  - - -  - - - - ↓ TRANSACTIONS ↓ - - - - -  - -  - - - - -  - - - -
 
 // get all transactions
