@@ -67,7 +67,7 @@ router.post("/sign-in", async (req, res) => {
 
     console.log("✅ Signed in successfully");
     await createAuditLog(req, foundUser._id, "login", (metadata = {}));
-    res.status(200).json(token);
+    res.status(200).json({ token });
   } catch (error) {
     console.log("❌ Sign in failed. Please try again: ", error);
     res.status(500).json({ error: error.message });
