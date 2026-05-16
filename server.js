@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const morgan = require("morgan");
 const cors = require("cors");
+const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 require("dotenv").config();
@@ -18,6 +19,8 @@ const verifyToken = require("./middleware/verifyToken");
 const requireRole = require("./middleware/requireRole");
 
 const app = express();
+app.use(helmet());
+// app.set("trust proxy", true);
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors({ origin: "http://localhost:5173" }));
@@ -33,7 +36,6 @@ app.use("/kyc", verifyToken, kycRoutes);
 app.use("/admin", verifyToken, requireRole("admin"), adminRoutes);
 app.use("/accounts", verifyToken, accountRoutes);
 app.use("/transactions", verifyToken, transactionRoutes);
-
 
 app.get("/", (req, res) => {
   res.send(`${mongoose.connection.name} server is running`);
