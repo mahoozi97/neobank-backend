@@ -17,49 +17,6 @@ const dateRange = (date) => {
 
 //  - - - -  - -  - - -  - - - - ↓ Account ↓ - - - - -  - -  - - - - -  - - - -
 
-// get all Accounts and filtring by status & type
-router.get("/accounts", async (req, res) => {
-  try {
-    const { status, type } = req.query;
-
-    const filteredParams = {};
-
-    if (status) filteredParams.status = status;
-    if (type) filteredParams.type = type;
-    // const filter = status ? { status } : type ? { type } : {};
-    const accounts = await Account.find(filteredParams).sort({ createdAt: -1 });
-
-    if (!accounts || accounts.length === 0) {
-      return res.status(404).json({ error: "Accounts not found!" });
-    }
-
-    console.log("✅ Fitched all accounts successfully", accounts);
-    res.status(200).json(accounts);
-  } catch (error) {
-    console.error("❌ Failed to fetch all accounts", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// get Account by ID
-router.get("/account/:accountId", async (req, res) => {
-  try {
-    const accountId = req.params.accountId;
-
-    const foundAccount = await Account.findById(accountId);
-
-    if (!foundAccount) {
-      return res.status(404).json({ error: "Account not found!" });
-    }
-
-    console.log("✅ Fitched account successfully", foundAccount);
-    res.status(200).json(foundAccount);
-  } catch (error) {
-    console.error("❌ Failed to fetch account", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // get Account by User ID
 router.get("/account/user/:userId", async (req, res) => {
   try {
@@ -80,47 +37,6 @@ router.get("/account/user/:userId", async (req, res) => {
 });
 
 //  - - - -  - -  - - -  - - - - ↓ KYC ↓ - - - - -  - -  - - - - -  - - - -
-
-// get all kyc and filtring by status
-router.get("/kyc", async (req, res) => {
-  try {
-    // const adminId = req.user._id // ← for audit log!
-
-    const { status } = req.query;
-
-    const filter = status ? { status } : {};
-    const allKyc = await KYC.find(filter).sort({ createdAt: -1 });
-
-    if (!allKyc || allKyc.length === 0) {
-      return res.status(404).json({ error: "No [KYC] documents found!" });
-    }
-
-    console.log("✅ [KYC] fitched all documents successfully", allKyc);
-    res.status(200).json(allKyc);
-  } catch (error) {
-    console.error("❌ [KYC] Failed to fetch all documents", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// get kyc by _id
-router.get("/kyc/:kycId", async (req, res) => {
-  try {
-    // const adminId = req.user._id // ← for audit log!
-    const kycId = req.params.kycId;
-    const Kyc = await KYC.findById(kycId);
-
-    if (!Kyc) {
-      return res.status(404).json({ error: "KYC Document not found!" });
-    }
-
-    console.log("✅ Fitched KYC document successfully", Kyc);
-    res.status(200).json(Kyc);
-  } catch (error) {
-    console.error("❌ Failed to fetch KYC document", error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // get kyc by userId
 router.get("/kyc/user/:userId", async (req, res) => {
