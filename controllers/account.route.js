@@ -79,7 +79,10 @@ router.get("/", async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const foundAccounts = await Account.find({ userId: userId });
+    const foundAccounts = await Account.find({
+      userId: userId,
+      status: { $ne: "closed" },
+    });
 
     if (!foundAccounts || foundAccounts === 0) {
       return res.status(404).json({ error: "Account not found!" });
@@ -113,7 +116,7 @@ router.post("/lookup", async (req, res) => {
     }
 
     const foundAccounts = await Account.find({
-      $or: [{ iban: iban.toUpperCase() }, { mobile: mobile }],
+      $or: [{ iban: iban }, { mobile: mobile }],
     })
       .select("nickname")
       .populate("userId", "name");
@@ -186,31 +189,6 @@ router.patch("/:accountId/freeze", async (req, res) => {
     res.status(200).json({ message: "Account has been successfully frozen." });
   } catch (error) {
     console.error("❌ Failed to freeze account", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// close account
-router.patch("/:accountId/close", async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const accountId = req.params.accountId;
-
-    const updatedAccount = await Account.findOneAndUpdate(
-      { _id: accountId, userId: userId },
-      { $set: { status: "closed" } },
-      { returnDocument: "after" },
-    );
-
-    if (!updatedAccount) {
-      return res.status(404).json({ error: "Account not found." });
-    }
-
-    console.log("✅ Account status updated to Closed");
-    await createAuditLog(req, userId, "close_account", (metadata = {}));
-    res.status(200).json({ message: "Account has been successfully closed." });
-  } catch (error) {
-    console.error("❌ Failed to close account", error);
     res.status(500).json({ error: error.message });
   }
 });

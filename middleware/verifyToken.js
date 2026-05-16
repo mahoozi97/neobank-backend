@@ -29,9 +29,9 @@ const verifyToken = (req, res, next) => {
       return res.status(403).json({ message: "Your user is blocked" });
     }
 
-    if (user.status === "deleted") {
-      return res.status(403).json({ message: "Account no longer exists" });
-    }
+    // if (user.status === "deleted") {
+    //   return res.status(403).json({ message: "Account no longer exists" });
+    // }
 
     req.user = user;
 
