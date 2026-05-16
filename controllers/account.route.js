@@ -193,29 +193,4 @@ router.patch("/:accountId/freeze", async (req, res) => {
   }
 });
 
-// close account
-router.patch("/:accountId/close", async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const accountId = req.params.accountId;
-
-    const updatedAccount = await Account.findOneAndUpdate(
-      { _id: accountId, userId: userId },
-      { $set: { status: "closed" } },
-      { returnDocument: "after" },
-    );
-
-    if (!updatedAccount) {
-      return res.status(404).json({ error: "Account not found." });
-    }
-
-    console.log("✅ Account status updated to Closed");
-    await createAuditLog(req, userId, "close_account", (metadata = {}));
-    res.status(200).json({ message: "Account has been successfully closed." });
-  } catch (error) {
-    console.error("❌ Failed to close account", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 module.exports = router;
