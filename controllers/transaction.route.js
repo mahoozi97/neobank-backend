@@ -12,38 +12,6 @@ const dateRange = (date) => {
   return { $gte: start, $lte: end };
 };
 
-// get by user Id and filtred by status
-// router.get("/", async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-//     const { status } = req.query;
-
-//     const filter = status ? { userId: userId, status } : { userId: userId };
-//     const allTransactions = await Transaction.find(filter)
-//       .sort({ createdAt: -1 })
-//       .populate("toAccount fromAccount", "nickname");
-
-//     if (!allTransactions) {
-//       return res.status(404).json({ error: "Transactions not found" });
-//     }
-
-//     const formattedTransactions = allTransactions.map((transaction) => {
-//       const obj = transaction.toObject();
-//       obj.amount = new Intl.NumberFormat("en-BH", {
-//         minimumFractionDigits: 3,
-//       }).format(obj.amount);
-//       obj.amount += " BHD";
-//       return obj;
-//     });
-
-//     console.log("✅ Fitched transactions successfully", formattedTransactions);
-//     res.status(200).json(formattedTransactions);
-//   } catch (error) {
-//     console.error("❌ Failed to fetch transactions", error);
-//     res.status(500).json({ error: error.message });
-//   }
-// });
-
 // transfer amount
 router.post("/transfer", async (req, res) => {
   const session = await mongoose.startSession();
