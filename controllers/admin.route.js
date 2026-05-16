@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 const createAuditLog = require("../utils/auditLog");
+const AuditLog = require("../models/AuditLog");
 
 const dateRange = (date) => {
   const start = new Date(date);
@@ -292,6 +293,39 @@ router.get("/transactions/:accountId", async (req, res) => {
     res.status(200).json(formattedTransactions);
   } catch (error) {
     console.error("❌ Failed to fetch transactions", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//  - - - -  - -  - - -  - - - - ↓ AUDIT LOG ↓ - - - - -  - -  - - - - -  - - - -
+
+router.get("/audit-logs", async (req, res) => {
+  try {
+    const { page = 1, limit = 10, action, userId } = req.query;
+    const filter = {};
+    if (action) filter.action = action;
+    if (userId) filter.userId = userId;
+
+    const logs = await AuditLog.find(filter)
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .lean(); // plain js object
+
+    const total = await AuditLog.countDocuments(filter);
+
+    console.log("✅ Fitched logs successfully");
+    res.status(200).json({
+      logs: logs,
+      pagination: {
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+        total: total,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Failed to fetch logs", error);
     res.status(500).json({ error: error.message });
   }
 });
