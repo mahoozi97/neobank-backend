@@ -116,4 +116,20 @@ router.post(
   },
 );
 
+router.get("/", async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const kyc = await KYC.find({ userId: userId })
+      .sort({ createdAt: -1 })
+      .select("status createdAt comment");
+
+    console.log("✅ Fitched KYC Documents successfully", kyc[0]);
+    res.status(200).json(kyc[0]);
+  } catch (error) {
+    console.log("❌ Fetch KYC Documents failed. Please try again: ", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

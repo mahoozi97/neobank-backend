@@ -6,6 +6,13 @@ const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 const createAuditLog = require("../utils/auditLog");
 
+const dateRange = (date) => {
+  const start = new Date(date);
+  const end = new Date(date);
+  end.setUTCHours(23, 59, 59, 999);
+  return { $gte: start, $lte: end };
+};
+
 // The mount route is /admin
 
 //  - - - -  - -  - - -  - - - - ↓ Account ↓ - - - - -  - -  - - - - -  - - - -
@@ -58,7 +65,7 @@ router.get("/account/user/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    const foundAccount = await Account.find({ userId: userId });
+    const foundAccount = await Account.findOne({ userId: userId });
 
     if (!foundAccount || foundAccount === 0) {
       return res.status(404).json({ error: "Account not found!" });
@@ -120,7 +127,7 @@ router.get("/kyc/user/:userId", async (req, res) => {
   try {
     // const adminId = req.user._id // ← for audit log!
     const userId = req.params.userId;
-    const userKyc = await KYC.findOne({ userId: userId });
+    const userKyc = await KYC.find({ userId: userId }).sort({ createdAt: -1 });
 
     if (!userKyc) {
       return res.status(404).json({ error: "KYC Document not found!" });
@@ -135,7 +142,7 @@ router.get("/kyc/user/:userId", async (req, res) => {
 });
 
 // approve KYC
-router.put("/kyc/:kycId/approve", async (req, res) => {
+router.patch("/kyc/:kycId/approve", async (req, res) => {
   console.log(req.params.kycId);
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -146,8 +153,8 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
 
     const kyc = await KYC.findByIdAndUpdate(
       kycId,
-      { status: "approved" },
-      { new: true, session }, // ← pass session
+      { $set: { status: "approved" } },
+      { returnDocument: "after", session }, // ← pass session
     );
 
     if (!kyc) {
@@ -157,8 +164,8 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       kyc.userId,
-      { $set: { status: "approved" } },
-      { new: true, session }, // ← pass session
+      { $set: { kycStatus: "verified" } },
+      { returnDocument: "after", session }, // ← pass session
     );
 
     if (!user) {
@@ -184,7 +191,7 @@ router.put("/kyc/:kycId/approve", async (req, res) => {
 });
 
 // Reject KYC
-router.put("/kyc/:kycId/reject", async (req, res) => {
+router.patch("/kyc/:kycId/reject", async (req, res) => {
   try {
     const adminId = req.user._id;
     const adminName = req.user.name;
@@ -193,7 +200,7 @@ router.put("/kyc/:kycId/reject", async (req, res) => {
     const kyc = await KYC.findByIdAndUpdate(
       kycId,
       { $set: { status: "rejected", comment: req.body.comment } },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!kyc) {
@@ -204,7 +211,7 @@ router.put("/kyc/:kycId/reject", async (req, res) => {
       targetUserId: kyc.userId,
       reviewedBy: `Admin - ${adminName}`,
     };
-    await createAuditLog(req, adminId, "kyc_rejected", metadata, session);
+    await createAuditLog(req, adminId, "kyc_rejected", metadata);
 
     res.status(200).json({ message: "✅ KYC rejected successfully" });
   } catch (error) {
@@ -213,7 +220,37 @@ router.put("/kyc/:kycId/reject", async (req, res) => {
   }
 });
 
-//  - - - -  - -  - - -  - - - - ↓ BLOCK USER ↓ - - - - -  - -  - - - - -  - - - -
+//  - - - -  - -  - - -  - - - - ↓ USER ↓ - - - - -  - -  - - - - -  - - - -
+
+router.get("/users", async (req, res) => {
+  try {
+    const { searchTerm } = req.query;
+
+    let filter = { role: { $ne: "admin" } };
+    if (searchTerm) {
+      filter = {
+        $or: [
+          { name: { $regex: searchTerm, $options: "i" } },
+          { cpr: searchTerm },
+        ],
+        role: { $ne: "admin" },
+      };
+    }
+    const allUsers = await User.find(filter)
+      .sort({ createdAt: -1 })
+      .select("-password");
+
+    if (!allUsers) {
+      res.status(404).json({ error: "Users not found" });
+    }
+
+    console.log("✅ Fetched all users successfully", allUsers);
+    res.status(200).json(allUsers);
+  } catch (error) {
+    console.log("✅ Fetched all users successfully", allUsers);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // block user
 router.patch("/users/:userId/block", async (req, res) => {
@@ -227,7 +264,7 @@ router.patch("/users/:userId/block", async (req, res) => {
       {
         $set: { status: "blocked" },
       },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!updatedUser) {
@@ -260,7 +297,7 @@ router.patch("/users/:userId/active", async (req, res) => {
       {
         $set: { status: "active" },
       },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!updatedUser) {
@@ -284,19 +321,47 @@ router.patch("/users/:userId/active", async (req, res) => {
 //  - - - -  - -  - - -  - - - - ↓ TRANSACTIONS ↓ - - - - -  - -  - - - - -  - - - -
 
 // get all transactions
-router.get("/transactions", async (req, res) => {
+router.get("/transactions/:accountId", async (req, res) => {
   try {
-    const { status, userId } = req.query;
-    const filter = {};
+    const accountId = req.params.accountId;
+    const { status, date } = req.query;
 
-    if (status) filter.status = status;
-    if (userId) filter.userId = userId;
-    const allTransactions = await Transaction.find(filter).sort({
-      createdAt: -1,
-    });
+    let filter;
+
+    if (date && status) {
+      filter = {
+        fromAccount: accountId,
+        status: status,
+        createdAt: dateRange(date),
+      };
+    } else if (date) {
+      filter = {
+        $or: [
+          { fromAccount: accountId },
+          { toAccount: accountId, status: "success" },
+        ],
+        createdAt: dateRange(date),
+      };
+    } else if (status) {
+      filter = {
+        fromAccount: accountId,
+        status: status,
+      };
+    } else {
+      filter = {
+        $or: [
+          { fromAccount: accountId },
+          { toAccount: accountId, status: "success" },
+        ],
+      };
+    }
+
+    const allTransactions = await Transaction.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("toAccount fromAccount", "nickname");
 
     if (!allTransactions) {
-      return res.status(404).json({ error: "Transactions not found!" });
+      return res.status(404).json({ error: "Transactions not found" });
     }
 
     const formattedTransactions = allTransactions.map((transaction) => {
@@ -311,7 +376,7 @@ router.get("/transactions", async (req, res) => {
     console.log("✅ Fitched transactions successfully", formattedTransactions);
     res.status(200).json(formattedTransactions);
   } catch (error) {
-    console.error("❌ Failed to fetch all transactions", error);
+    console.error("❌ Failed to fetch transactions", error);
     res.status(500).json({ error: error.message });
   }
 });

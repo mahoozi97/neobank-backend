@@ -5,37 +5,44 @@ const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const createAuditLog = require("../utils/auditLog");
 
+const dateRange = (date) => {
+  const start = new Date(date);
+  const end = new Date(date);
+  end.setUTCHours(23, 59, 59, 999);
+  return { $gte: start, $lte: end };
+};
+
 // get by user Id and filtred by status
-router.get("/", async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { status } = req.query;
+// router.get("/", async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     const { status } = req.query;
 
-    const filter = status ? { userId: userId, status } : { userId: userId };
-    const allTransactions = await Transaction.find(filter)
-      .sort({ createdAt: -1 })
-      .populate("toAccount fromAccount", "nickname");
+//     const filter = status ? { userId: userId, status } : { userId: userId };
+//     const allTransactions = await Transaction.find(filter)
+//       .sort({ createdAt: -1 })
+//       .populate("toAccount fromAccount", "nickname");
 
-    if (!allTransactions) {
-      return res.status(404).json({ error: "Transactions not found" });
-    }
+//     if (!allTransactions) {
+//       return res.status(404).json({ error: "Transactions not found" });
+//     }
 
-    const formattedTransactions = allTransactions.map((transaction) => {
-      const obj = transaction.toObject();
-      obj.amount = new Intl.NumberFormat("en-BH", {
-        minimumFractionDigits: 3,
-      }).format(obj.amount);
-      obj.amount += " BHD";
-      return obj;
-    });
+//     const formattedTransactions = allTransactions.map((transaction) => {
+//       const obj = transaction.toObject();
+//       obj.amount = new Intl.NumberFormat("en-BH", {
+//         minimumFractionDigits: 3,
+//       }).format(obj.amount);
+//       obj.amount += " BHD";
+//       return obj;
+//     });
 
-    console.log("✅ Fitched transactions successfully", formattedTransactions);
-    res.status(200).json(formattedTransactions);
-  } catch (error) {
-    console.error("❌ Failed to fetch transactions", error);
-    res.status(500).json({ error: error.message });
-  }
-});
+//     console.log("✅ Fitched transactions successfully", formattedTransactions);
+//     res.status(200).json(formattedTransactions);
+//   } catch (error) {
+//     console.error("❌ Failed to fetch transactions", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
 // transfer amount
 router.post("/transfer", async (req, res) => {
@@ -118,11 +125,11 @@ router.post("/transfer", async (req, res) => {
       }
     }
 
-      if (amount > 3000) {
-        return res.status(403).json({
-          error: declinedMessage,
-        });
-      }
+    if (amount > 3000) {
+      return res.status(403).json({
+        error: declinedMessage,
+      });
+    }
 
     const newTransaction = await Transaction.create(
       [
@@ -165,7 +172,7 @@ router.post("/transfer", async (req, res) => {
     }
 
     const to = await Account.findOneAndUpdate(
-      { _id: toAccount, status: { $ne: "closed" } },
+      { _id: toAccount, status: { $nin: ["closed", "frozen"] } },
       { $inc: { balance: +amount } },
       { returnDocument: "after", session },
     );
@@ -217,6 +224,67 @@ router.post("/transfer", async (req, res) => {
     res.status(500).json({ error: error.message });
   } finally {
     session.endSession();
+  }
+});
+
+router.get("/:accountId", async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const accountId = req.params.accountId;
+    const { status, date } = req.query;
+
+    let filter;
+
+    if (date && status) {
+      filter = {
+        fromAccount: accountId,
+        status: status,
+        createdAt: dateRange(date),
+      };
+    } else if (date) {
+      filter = {
+        $or: [
+          { fromAccount: accountId },
+          { toAccount: accountId, status: "success" },
+        ],
+        createdAt: dateRange(date),
+      };
+    } else if (status) {
+      filter = {
+        fromAccount: accountId,
+        status: status,
+      };
+    } else {
+      filter = {
+        $or: [
+          { fromAccount: accountId },
+          { toAccount: accountId, status: "success" },
+        ],
+      };
+    }
+
+    const allTransactions = await Transaction.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("toAccount fromAccount", "nickname");
+
+    if (!allTransactions) {
+      return res.status(404).json({ error: "Transactions not found" });
+    }
+
+    const formattedTransactions = allTransactions.map((transaction) => {
+      const obj = transaction.toObject();
+      obj.amount = new Intl.NumberFormat("en-BH", {
+        minimumFractionDigits: 3,
+      }).format(obj.amount);
+      obj.amount += " BHD";
+      return obj;
+    });
+
+    console.log("✅ Fitched transactions successfully", formattedTransactions);
+    res.status(200).json(formattedTransactions);
+  } catch (error) {
+    console.error("❌ Failed to fetch transactions", error);
+    res.status(500).json({ error: error.message });
   }
 });
 

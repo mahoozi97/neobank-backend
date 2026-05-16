@@ -79,7 +79,10 @@ router.get("/", async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const foundAccounts = await Account.find({ userId: userId });
+    const foundAccounts = await Account.find({
+      userId: userId,
+      status: { $ne: "closed" },
+    });
 
     if (!foundAccounts || foundAccounts === 0) {
       return res.status(404).json({ error: "Account not found!" });
@@ -113,7 +116,7 @@ router.post("/lookup", async (req, res) => {
     }
 
     const foundAccounts = await Account.find({
-      $or: [{ iban: iban.toUpperCase() }, { mobile: mobile }],
+      $or: [{ iban: iban }, { mobile: mobile }],
     })
       .select("nickname")
       .populate("userId", "name");
