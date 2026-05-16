@@ -5,8 +5,8 @@ const {
   uploadDocuments,
   formatFileSize,
   deleteFiles,
-  multerErrorHandler,
-} = require("../middleware/cloudinary");
+} = require("../utils/cloudinary");
+const { multerErrorHandler } = require("../middleware/upload");
 const multer = require("multer");
 const upload = multer({ storage: uploadDocuments });
 const KYC = require("../models/KYC");
@@ -19,7 +19,7 @@ router.post(
     { name: "frontId", maxCount: 1 },
     { name: "backId", maxCount: 1 },
     { name: "passport", maxCount: 1 },
-  ]),
+  ]), multerErrorHandler,
   async (req, res) => {
     try {
       const userId = req.user._id;
@@ -84,7 +84,7 @@ router.post(
           },
         ],
       };
-      
+
       await createAuditLog(req, userId, "kyc_upload", metadata);
 
       console.log("✅ Documents uploaded successfully", uploadedDocuments);
