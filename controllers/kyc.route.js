@@ -1,35 +1,17 @@
 // Know Your Customer
 const router = require("express").Router();
-const { uploadDocuments } = require("../middleware/cloudinary");
+const cloudinary = require("cloudinary").v2;
+const {
+  uploadDocuments,
+  formatFileSize,
+  deleteFiles,
+  multerErrorHandler,
+} = require("../middleware/cloudinary");
 const multer = require("multer");
 const upload = multer({ storage: uploadDocuments });
 const KYC = require("../models/KYC");
-const cloudinary = require("cloudinary").v2;
+
 const createAuditLog = require("../utils/auditLog");
-
-function formatFileSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-  if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
-
-// helper: delete uploaded files from Cloudinary
-const deleteFiles = async (files) => {
-  await Promise.all(
-    files.map((file) => cloudinary.uploader.destroy(file.public_id)),
-  );
-};
-
-const multerErrorHandler = (err, req, res, next) => {
-  if (err.code === "LIMIT_UNEXPECTED_FILE") {
-    return res
-      .status(400)
-      .json({ error: "You must upload exactly 3 documents." });
-  }
-  next(err);
-};
 
 router.post(
   "/upload",
@@ -74,7 +56,7 @@ router.post(
           .json({ error: "You must upload exactly 3 documents" });
       }
 
-      console.log(req.files);
+      // console.log(req.files);
       const documents = [
         { type: "front ID", url: req.files["frontId"][0].path },
         { type: "back ID", url: req.files["backId"][0].path },
@@ -102,6 +84,7 @@ router.post(
           },
         ],
       };
+      
       await createAuditLog(req, userId, "kyc_upload", metadata);
 
       console.log("✅ Documents uploaded successfully", uploadedDocuments);

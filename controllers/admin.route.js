@@ -24,7 +24,7 @@ router.get("/account/user/:userId", async (req, res) => {
 
     const foundAccount = await Account.findOne({ userId: userId });
 
-    if (!foundAccount || foundAccount === 0) {
+    if (!foundAccount) {
       return res.status(404).json({ error: "Account not found!" });
     }
 
@@ -41,7 +41,6 @@ router.get("/account/user/:userId", async (req, res) => {
 // get kyc by userId
 router.get("/kyc/user/:userId", async (req, res) => {
   try {
-    // const adminId = req.user._id // ← for audit log!
     const userId = req.params.userId;
     const userKyc = await KYC.find({ userId: userId }).sort({ createdAt: -1 });
 
