@@ -301,28 +301,23 @@ router.get("/transactions/:accountId", async (req, res) => {
 
 router.get("/audit-logs", async (req, res) => {
   try {
-    const { page = 1, limit = 10, action, userId } = req.query;
+    const { page = 1, limit = 10, action } = req.query;
     const filter = {};
     if (action) filter.action = action;
-    if (userId) filter.userId = userId;
 
     const logs = await AuditLog.find(filter)
       .populate("userId", "name email")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(Number(limit))
-      .lean(); // plain js object
+      .limit(Number(limit));
 
     const total = await AuditLog.countDocuments(filter);
+    console.log(logs[0]);
 
     console.log("✅ Fitched logs successfully");
     res.status(200).json({
       logs: logs,
-      pagination: {
-        page: Number(page),
-        pages: Math.ceil(total / limit),
-        total: total,
-      },
+      total: total,
     });
   } catch (error) {
     console.error("❌ Failed to fetch logs", error);
