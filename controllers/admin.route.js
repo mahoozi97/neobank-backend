@@ -312,7 +312,6 @@ router.get("/audit-logs", async (req, res) => {
       .limit(Number(limit));
 
     const total = await AuditLog.countDocuments(filter);
-    console.log(logs[0]);
 
     console.log("✅ Fitched logs successfully");
     res.status(200).json({
