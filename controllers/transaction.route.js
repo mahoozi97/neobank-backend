@@ -4,6 +4,7 @@ const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const createAuditLog = require("../utils/auditLog");
+const transfer = require("../middleware/transfer");
 
 const dateRange = (date) => {
   const start = new Date(date);
@@ -13,7 +14,7 @@ const dateRange = (date) => {
 };
 
 // transfer amount
-router.post("/transfer", async (req, res) => {
+router.post("/transfer", transfer, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -25,79 +26,6 @@ router.post("/transfer", async (req, res) => {
       to: toAccount,
       amount: amount,
     };
-
-    if (fromAccount === toAccount) {
-      return res.status(400).json({
-        error:
-          "Transfer failed: sender and recipient accounts cannot be the same.",
-      });
-    }
-
-    const sender = await User.findById(userId).select("kycStatus");
-
-    if (sender.kycStatus !== "verified" && amount > 10) {
-      return res.status(403).json({
-        error:
-          "Transfer limit for unverified user is 10 BHD. Please complete KYC verification to increase your limit.",
-      });
-    }
-
-    if (amount < 0.1) {
-      return res
-        .status(400)
-        .json({ error: "The amount is less than the minimum" });
-    }
-
-    const now = new Date();
-    const startOfDay = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
-    const endOfDay = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
-    );
-
-    // aggregate!!
-    const transfers = await Transaction.aggregate([
-      {
-        $match: {
-          userId: new mongoose.Types.ObjectId(userId),
-          fromAccount: new mongoose.Types.ObjectId(fromAccount),
-          createdAt: { $gte: startOfDay, $lt: endOfDay },
-          status: "success",
-        },
-      },
-      {
-        $group: {
-          _id: "$userId",
-          totalAmount: { $sum: "$amount" },
-        },
-      },
-    ]);
-
-    const declinedMessage =
-      "Transfer declined. This amount would exceed your daily transfer limit.";
-
-    if (transfers.length === 1) {
-      const totalSpentToday = (transfers[0].totalAmount += amount);
-      console.log(totalSpentToday);
-      if (sender.kycStatus !== "verified" && totalSpentToday > 100) {
-        return res.status(403).json({
-          error: `${declinedMessage} Please complete KYC verification to increase your daily limit.`,
-        });
-      }
-
-      if (totalSpentToday > 3000) {
-        return res.status(403).json({
-          error: declinedMessage,
-        });
-      }
-    }
-
-    if (amount > 3000) {
-      return res.status(403).json({
-        error: declinedMessage,
-      });
-    }
 
     const newTransaction = await Transaction.create(
       [
