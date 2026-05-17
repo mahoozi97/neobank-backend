@@ -23,7 +23,11 @@ app.use(helmet());
 // app.set("trust proxy", true);
 app.use(express.json());
 app.use(morgan("dev"));
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://neobank-frontend.netlify.app"],
+  }),
+);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
