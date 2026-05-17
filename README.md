@@ -52,8 +52,8 @@ npm run dev
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| POST | `/auth/sign-up` | Register a new user | No |
-| POST | `/auth/sign-in` | Login and receive JWT token | No |
+| POST | `/sign-up` | Register a new user | No |
+| POST | `/sign-in` | Login and receive JWT token | No |
 
 ---
 
