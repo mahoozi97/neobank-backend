@@ -52,10 +52,10 @@ npm run dev
 
 ### Auth — `/auth`
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description |
 |---|---|---|---|
-| POST | `/auth/sign-up` | Register a new user | No |
-| POST | `/auth/sign-in` | Login and receive JWT token | No |
+| POST | `/auth/sign-up` | Register a new user |
+| POST | `/auth/sign-in` | Login and receive JWT token |
 
 ---
 
