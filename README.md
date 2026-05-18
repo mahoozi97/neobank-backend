@@ -54,8 +54,8 @@ npm run dev
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| POST | `/sign-up` | Register a new user | No |
-| POST | `/sign-in` | Login and receive JWT token | No |
+| POST | `/auth/sign-up` | Register a new user | No |
+| POST | `/auth/sign-in` | Login and receive JWT token | No |
 
 ---
 
@@ -63,11 +63,11 @@ npm run dev
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| POST | `/` | Create a new bank account | Yes |
-| GET | `/` | Get all accounts for the logged-in user | Yes |
+| POST | `/accounts` | Create a new bank account | Yes |
+| GET | `/accounts` | Get all accounts for the logged-in user | Yes |
 | POST | /lookup | Look up an account by IBAN or mobile number | Yes |
-| PATCH | `/:accountId/activate` | Activate an account | Yes |
-| PATCH | `/:accountId/freeze` | Freeze an account | Yes |
+| PATCH | `/accounts/:accountId/activate` | Activate an account | Yes |
+| PATCH | `/accounts/:accountId/freeze` | Freeze an account | Yes |
 
 ---
 
@@ -75,8 +75,8 @@ npm run dev
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| POST | `/transfer` | Transfer funds between accounts (ACID) | Yes |
-| GET | `/:accountId` | Get transactions for a specific account | Yes |
+| POST | `/transactions/transfer` | Transfer funds between accounts (ACID) | Yes |
+| GET | `/transactions/:accountId` | Get transactions for a specific account | Yes |
 
 > Transfers are processed using MongoDB Sessions to guarantee atomicity. Either the full transfer completes or it rolls back entirely.
 
@@ -86,8 +86,8 @@ npm run dev
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| POST | `/upload` | Upload KYC documents (Cloudinary) | Yes |
-| GET | `/` | Get KYC record for the logged-in user | Yes |
+| POST | `/kyc/upload` | Upload KYC documents (Cloudinary) | Yes |
+| GET | `/kyc` | Get KYC record for the logged-in user | Yes |
 
 **Accepted document types:** `front ID`, `back ID`, `passport`
 
@@ -107,23 +107,23 @@ A user can only re-submit if their previous request was `rejected`.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/users` | Get all users (excludes admins). Supports `?searchTerm=` to filter by name or CPR |
-| PATCH | `/users/:userId/block` | Block a user |
-| PATCH | `/users/:userId/active` | Activate a user |
+| GET | `/admin/users` | Get all users (excludes admins). Supports `?searchTerm=` to filter by name or CPR |
+| PATCH | `/admin/users/:userId/block` | Block a user |
+| PATCH | `/admin/users/:userId/active` | Activate a user |
 
 **Accounts**
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/account/user/:userId` | Get accounts belonging to a specific user |
+| GET | `/admin/account/user/:userId` | Get accounts belonging to a specific user |
 
 **KYC**
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/kyc/user/:userId` | Get KYC submission for a specific user |
-| PATCH | `/kyc/:kycId/approve` | Approve a KYC request (sets user to `verified`) |
-| PATCH | `/kyc/:kycId/reject` | Reject a KYC request with a reason comment |
+| GET | `/admin/kyc/user/:userId` | Get KYC submission for a specific user |
+| PATCH | `/admin/kyc/:kycId/approve` | Approve a KYC request (sets user to `verified`) |
+| PATCH | `/admin/kyc/:kycId/reject` | Reject a KYC request with a reason comment |
 
 > Approving a KYC uses a MongoDB Session to update both the `KYC` record and the `User` record atomically.
 
@@ -131,13 +131,13 @@ A user can only re-submit if their previous request was `rejected`.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/transactions/:accountId` | Get transactions for an account. Supports `?status=` and `?date=` filters |
+| GET | `/admin/transactions/:accountId` | Get transactions for an account. Supports `?status=` and `?date=` filters |
 
 **Audit Logs**
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/audit-logs` | Get audit logs. Supports `?action=`, `?page=`, and `?limit=` |
+| GET | `/admin/audit-logs` | Get audit logs. Supports `?action=`, `?page=`, and `?limit=` |
 
 ---
 
