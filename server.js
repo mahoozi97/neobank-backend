@@ -25,7 +25,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://neobank-frontend.netlify.app"],
+    origin: ["http://localhost:5173", "https://neobank-frontend.netlify.app", "https://6a09f77fd964880ee355ad4f--neobank-frontend.netlify.app"],
   }),
 );
 
