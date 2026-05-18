@@ -2,6 +2,8 @@
 
 A secure, production-ready RESTful API for a digital banking platform. Built with Node.js, Express, and MongoDB.
 
+> 🔗 **Frontend UI Repository:** [View the React.js Frontend Here](https://github.com/mahoozi97/neobank-frontend)
+
 ---
 
 ## Tech Stack
