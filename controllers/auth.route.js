@@ -5,14 +5,11 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET_KEY;
 const validator = require("validator");
 const createAuditLog = require("../utils/auditLog");
+const validateUser = require("../middleware/validateUser");
 
-router.post("/sign-up", async (req, res) => {
+router.post("/sign-up", validateUser, async (req, res) => {
   try {
-    const { email, cpr } = req.body;
-
-    if (!validator.isEmail(email)) {
-      return res.status(409).json({ error: "Please enter a valid email" });
-    }
+    const { email, cpr, name } = req.body;
 
     const foundUser = await User.findOne({
       $or: [{ cpr: cpr }, { email: email }],

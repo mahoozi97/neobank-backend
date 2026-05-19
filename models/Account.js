@@ -10,6 +10,8 @@ const accountSchema = new mongoose.Schema(
     nickname: {
       type: String,
       required: true,
+      trim: true,
+      minlength: 3,
     },
     accountNumber: {
       type: String,
@@ -28,7 +30,7 @@ const accountSchema = new mongoose.Schema(
     balance: {
       type: Number,
       min: 0,
-      default: 0,
+      default: 500,
     },
     currency: {
       type: String,
