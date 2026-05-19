@@ -123,11 +123,12 @@ router.post("/transfer", transfer, async (req, res) => {
   }
 });
 
+// get transactions by account Id
 router.get("/:accountId", async (req, res) => {
   try {
     const userId = req.user._id;
     const accountId = req.params.accountId;
-    const { status, date } = req.query;
+    const { page = 1, limit = 10, status, date } = req.query;
 
     let filter;
 
@@ -161,7 +162,11 @@ router.get("/:accountId", async (req, res) => {
 
     const allTransactions = await Transaction.find(filter)
       .sort({ createdAt: -1 })
-      .populate("toAccount fromAccount", "nickname");
+      .populate("toAccount fromAccount", "nickname")
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const total = await Transaction.countDocuments(filter);
 
     if (!allTransactions) {
       return res.status(404).json({ error: "Transactions not found" });
@@ -177,7 +182,9 @@ router.get("/:accountId", async (req, res) => {
     });
 
     console.log("✅ Fitched transactions successfully", formattedTransactions);
-    res.status(200).json(formattedTransactions);
+    res
+      .status(200)
+      .json({ transactions: formattedTransactions, totalDocuments: total });
   } catch (error) {
     console.error("❌ Failed to fetch transactions", error);
     res.status(500).json({ error: error.message });
