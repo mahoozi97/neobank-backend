@@ -172,9 +172,6 @@ A user can only re-submit if their previous request was `rejected`.
 | Transaction | fromAccount, toAccount, amount, currency, type, status |
 | KYC | userId, documents, status, comment |
 | AuditLog | userId, action, ipAddress, metadata |
-| Card | userId, accountId, name, number, cvv, pin (hashed), cardType, validThru, status |
-
-> **Note:** The `Card` model is defined but has no endpoints yet.
 
 ---
 
@@ -182,6 +179,10 @@ A user can only re-submit if their previous request was `rejected`.
 
 | Service | Provider |
 |---|---|
-| Backend | Render / Railway |
+| Backend | Render |
 | Database | MongoDB Atlas |
 | File Storage | Cloudinary |
+
+🔗 **Live API Base URL:** [https://neobank-backend-z6vx.onrender.com](https://neobank-backend-z6vx.onrender.com)
+
+---

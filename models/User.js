@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const { trim } = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
+      trim: true,
     },
     email: {
       type: String,
@@ -16,6 +18,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      maxlength: 9
     },
     password: {
       type: String,
