@@ -17,20 +17,20 @@ const verifyToken = (req, res, next) => {
   if (!token) {
     return res
       .status(401)
-      .json({ message: "Access Denied. No token provided" });
+      .json({ error: "Access Denied. No token provided" });
   }
 
   jwt.verify(token, JWT_SECRET_KEY, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: "Invalid credientials" });
+      return res.status(403).json({ error: "Invalid credientials" });
     }
 
     if (user.status === "blocked") {
-      return res.status(403).json({ message: "Your user is blocked" });
+      return res.status(403).json({ error: "Your user is blocked" });
     }
 
     // if (user.status === "deleted") {
-    //   return res.status(403).json({ message: "Account no longer exists" });
+    //   return res.status(403).json({ error: "Account no longer exists" });
     // }
 
     req.user = user;

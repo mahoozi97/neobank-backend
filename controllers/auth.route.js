@@ -56,11 +56,15 @@ router.post("/sign-in", async (req, res) => {
       return res.status(401).json({ error: "email or password incorrect" });
     }
 
+    if (foundUser.status === "blocked") {
+      return res.status(403).json({ error: "Your user is blocked" });
+    }
+
     // change to object and delete the password & cpr. (modern way)
     const { password: _password, cpr, ...payload } = foundUser.toObject();
 
     // Generate JWT token if authentication is successful
-    const token = jwt.sign({ ...payload }, JWT_SECRET, { expiresIn: "24h" });
+    const token = jwt.sign({ ...payload }, JWT_SECRET, { expiresIn: "1h" });
 
     console.log("✅ Signed in successfully");
     await createAuditLog(req, foundUser._id, "login", (metadata = {}));
