@@ -99,7 +99,7 @@ router.get("/", async (req, res) => {
 // get accounts by IBAN or Mobile No.
 router.post("/lookup", async (req, res) => {
   try {
-    const { iban, mobile, beneficiary } = req.body;
+    const { iban, mobile } = req.body;
 
     if (mobile) {
       if (mobile.length !== 8) {
@@ -117,20 +117,10 @@ router.post("/lookup", async (req, res) => {
 
     const foundAccounts = await Account.find({
       $or: [{ iban: iban }, { mobile: mobile }],
-    })
-      .select("nickname")
-      .populate("userId", "name");
-
-    if (!foundAccounts || foundAccounts === 0) {
+    }).select("nickname");
+    
+    if (!foundAccounts || foundAccounts.length === 0) {
       return res.status(404).json({ error: "Account not found!" });
-    }
-
-    for (account of foundAccounts) {
-      if (account.userId.name !== beneficiary.toUpperCase()) {
-        return res.status(404).json({
-          error: "The provided information does not match any account!",
-        });
-      }
     }
 
     console.log("✅ Fitched account successfully", foundAccounts);
