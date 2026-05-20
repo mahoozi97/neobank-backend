@@ -25,6 +25,7 @@ router.get("/account/user/:userId", async (req, res) => {
 
     const foundAccount = await Account.findOne({ userId: userId });
 
+    // return res.status(204).end();
     if (!foundAccount) {
       return res.status(404).json({ error: "Account not found!" });
     }
@@ -230,69 +231,6 @@ router.patch("/users/:userId/active", async (req, res) => {
     res.status(200).json({ message: "User has been successfully activated." });
   } catch (error) {
     console.error("❌ Failed to active user", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-//  - - - -  - -  - - -  - - - - ↓ TRANSACTIONS ↓ - - - - -  - -  - - - - -  - - - -
-
-// get all transactions
-router.get("/transactions/:accountId", async (req, res) => {
-  try {
-    const accountId = req.params.accountId;
-    const { status, date } = req.query;
-
-    let filter;
-
-    if (date && status) {
-      filter = {
-        fromAccount: accountId,
-        status: status,
-        createdAt: dateRange(date),
-      };
-    } else if (date) {
-      filter = {
-        $or: [
-          { fromAccount: accountId },
-          { toAccount: accountId, status: "success" },
-        ],
-        createdAt: dateRange(date),
-      };
-    } else if (status) {
-      filter = {
-        fromAccount: accountId,
-        status: status,
-      };
-    } else {
-      filter = {
-        $or: [
-          { fromAccount: accountId },
-          { toAccount: accountId, status: "success" },
-        ],
-      };
-    }
-
-    const allTransactions = await Transaction.find(filter)
-      .sort({ createdAt: -1 })
-      .populate("toAccount fromAccount", "nickname");
-
-    if (!allTransactions) {
-      return res.status(404).json({ error: "Transactions not found" });
-    }
-
-    const formattedTransactions = allTransactions.map((transaction) => {
-      const obj = transaction.toObject();
-      obj.amount = new Intl.NumberFormat("en-BH", {
-        minimumFractionDigits: 3,
-      }).format(obj.amount);
-      obj.amount += " BHD";
-      return obj;
-    });
-
-    console.log("✅ Fitched transactions successfully", formattedTransactions);
-    res.status(200).json(formattedTransactions);
-  } catch (error) {
-    console.error("❌ Failed to fetch transactions", error);
     res.status(500).json({ error: error.message });
   }
 });
