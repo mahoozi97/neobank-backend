@@ -16,8 +16,7 @@ const transfer = async (req, res, next) => {
     };
 
     if (fromAccount === toAccount) {
-      const reasonMessage =
-        "Transfer failed: sender and recipient accounts cannot be the same.";
+      const reasonMessage = "Sender and recipient accounts cannot be the same.";
       metadata.transferDetails.rejectionReason = reasonMessage;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       return res.status(400).json({
@@ -29,7 +28,7 @@ const transfer = async (req, res, next) => {
 
     if (sender.kycStatus !== "verified" && amount > 10) {
       const reasonMessage =
-        "Transfer limit for unverified user is 10 BHD. Please complete KYC verification to increase your limit.";
+        "Your transfer limit is 10 BHD until identity verification is complete.";
       metadata.transferDetails.rejectionReason = reasonMessage;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       return res.status(403).json({
@@ -38,7 +37,7 @@ const transfer = async (req, res, next) => {
     }
 
     if (amount < 0.1) {
-      const reasonMessage = "The amount is less than the minimum";
+      const reasonMessage = "The amount is less than 100 fils";
       metadata.transferDetails.rejectionReason = reasonMessage;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       return res.status(400).json({ error: reasonMessage });
@@ -80,7 +79,7 @@ const transfer = async (req, res, next) => {
       const previousSpentToday = transfers[0].totalAmount;
       const expectedTotalSpent = previousSpentToday + amount;
       if (sender.kycStatus !== "verified" && expectedTotalSpent > 100) {
-        const reasonMessage = `${declinedMessage} Please complete KYC verification to increase your daily limit.`;
+        const reasonMessage = `${declinedMessage} Identity verification must be completed to increase your daily limit.`;
         metadata.transferDetails.rejectionReason = reasonMessage;
         await createAuditLog(req, userId, "transfer_failed", metadata);
         return res.status(403).json({
