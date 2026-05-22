@@ -21,11 +21,7 @@ router.post("/transfer", transfer, async (req, res) => {
     const userId = req.user._id;
     const { fromAccount, toAccount, amount } = req.body;
     const metadata = {};
-    metadata.transferDetails = {
-      from: fromAccount,
-      to: toAccount,
-      amount: amount,
-    };
+    metadata.amount = `${amount} BHD`;
 
     const newTransaction = await Transaction.create(
       [
@@ -59,9 +55,11 @@ router.post("/transfer", transfer, async (req, res) => {
         status: "rejected",
         rejectionReason: reasonMessage,
       });
-      metadata.transferDetails.status = "rejected";
-      metadata.transferDetails.rejectionReason = reasonMessage;
-      metadata.transferDetails.ref = transaction._id;
+      metadata.from = fromAccount;
+      metadata.to = toAccount;
+      metadata.status = "rejected";
+      metadata.rejectionReason = reasonMessage;
+      metadata.ref = transaction._id;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       await session.abortTransaction();
       return res.status(422).json({ error: reasonMessage });
@@ -84,9 +82,11 @@ router.post("/transfer", transfer, async (req, res) => {
         status: "rejected",
         rejectionReason: reasonMessage,
       });
-      metadata.transferDetails.status = "rejected";
-      metadata.transferDetails.rejectionReason = reasonMessage;
-      metadata.transferDetails.ref = transaction._id;
+      metadata.from = from.nickname;
+      metadata.to = toAccount;
+      metadata.status = "rejected";
+      metadata.rejectionReason = reasonMessage;
+      metadata.ref = transaction._id;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       await session.abortTransaction();
       return res.status(422).json({ error: reasonMessage });
@@ -95,8 +95,10 @@ router.post("/transfer", transfer, async (req, res) => {
     newTransaction[0].status = "success";
     await newTransaction[0].save({ session });
 
-    metadata.transferDetails.status = "success";
-    metadata.transferDetails.ref = newTransaction[0]._id;
+    metadata.from = from.nickname;
+    metadata.to = toAccount.nickname;
+    metadata.status = "success";
+    metadata.ref = newTransaction[0]._id;
     await createAuditLog(req, userId, "transfer", metadata, session);
 
     const formattedAmount = new Intl.NumberFormat("en-BH", {
