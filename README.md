@@ -80,7 +80,7 @@ npm run dev
 
 > Transfers are processed using MongoDB Sessions to guarantee atomicity. Either the full transfer completes or it rolls back entirely.
 
-> **Note:** Get transactions endpoint is shared between users and admin.
+> **Note:** Get transactions endpoint is shared between users and admin. Users can only retrieve transactions for their own accounts, while admins can access transactions for any account.
 
 ---
 
