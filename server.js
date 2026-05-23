@@ -35,7 +35,7 @@ const limiter = rateLimit({
 });
 
 // Routes
-app.use("/auth", authRoutes); // limiter
+app.use("/auth", limiter, authRoutes); 
 app.use("/kyc", verifyToken, kycRoutes);
 app.use("/admin", verifyToken, requireRole("admin"), adminRoutes);
 app.use("/accounts", verifyToken, accountRoutes);
