@@ -8,16 +8,15 @@ const transfer = async (req, res, next) => {
     const userId = req.user._id;
     const { fromAccount, toAccount, amount } = req.body;
     const metadata = {};
-    metadata.transferDetails = {
-      from: fromAccount,
-      to: toAccount,
-      amount: amount,
-      status: "rejected",
-    };
+
+    metadata.from = fromAccount;
+    metadata.to = toAccount;
+    metadata.amount = amount;
+    metadata.status = "rejected";
 
     if (fromAccount === toAccount) {
       const reasonMessage = "Sender and recipient accounts cannot be the same.";
-      metadata.transferDetails.rejectionReason = reasonMessage;
+      metadata.rejectionReason = reasonMessage;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       return res.status(400).json({
         error: reasonMessage,
@@ -29,7 +28,7 @@ const transfer = async (req, res, next) => {
     if (sender.kycStatus !== "verified" && amount > 10) {
       const reasonMessage =
         "Your transfer limit is 10 BHD until identity verification is complete.";
-      metadata.transferDetails.rejectionReason = reasonMessage;
+      metadata.rejectionReason = reasonMessage;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       return res.status(403).json({
         error: reasonMessage,
@@ -38,7 +37,7 @@ const transfer = async (req, res, next) => {
 
     if (amount < 0.1) {
       const reasonMessage = "The amount is less than 100 fils";
-      metadata.transferDetails.rejectionReason = reasonMessage;
+      metadata.rejectionReason = reasonMessage;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       return res.status(400).json({ error: reasonMessage });
     }
@@ -80,7 +79,7 @@ const transfer = async (req, res, next) => {
       const expectedTotalSpent = previousSpentToday + amount;
       if (sender.kycStatus !== "verified" && expectedTotalSpent > 100) {
         const reasonMessage = `${declinedMessage} Identity verification must be completed to increase your daily limit.`;
-        metadata.transferDetails.rejectionReason = reasonMessage;
+        metadata.rejectionReason = reasonMessage;
         await createAuditLog(req, userId, "transfer_failed", metadata);
         return res.status(403).json({
           error: reasonMessage,
@@ -88,7 +87,7 @@ const transfer = async (req, res, next) => {
       }
 
       if (expectedTotalSpent > 3000) {
-        metadata.transferDetails.rejectionReason = declinedMessage;
+        metadata.rejectionReason = declinedMessage;
         await createAuditLog(req, userId, "transfer_failed", metadata);
         return res.status(403).json({
           error: declinedMessage,
@@ -97,7 +96,7 @@ const transfer = async (req, res, next) => {
     }
 
     if (amount > 3000) {
-      metadata.transferDetails.rejectionReason = declinedMessage;
+      metadata.rejectionReason = declinedMessage;
       await createAuditLog(req, userId, "transfer_failed", metadata);
       return res.status(403).json({
         error: declinedMessage,
