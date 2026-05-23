@@ -10,11 +10,24 @@ const { multerErrorHandler } = require("../middleware/upload");
 const multer = require("multer");
 const upload = multer({ storage: uploadDocuments });
 const KYC = require("../models/KYC");
+const rateLimit = require("express-rate-limit");
 
 const createAuditLog = require("../utils/auditLog");
 
+const uploadLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 2,
+  message: {
+    status: 429,
+    message: "Too many upload attempts. Please try again in 5 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.post(
   "/upload",
+  uploadLimiter,
   upload.fields([
     { name: "frontId", maxCount: 1 },
     { name: "backId", maxCount: 1 },

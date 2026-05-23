@@ -4,11 +4,21 @@ const { customAlphabet } = require("nanoid");
 const alphabet = "0123456789";
 const nanoidShort = customAlphabet(alphabet, 12);
 const createAuditLog = require("../utils/auditLog");
+const rateLimit = require("express-rate-limit");
+
+const openAccountLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: {
+    status: 429,
+    message: "Account creation limit reached. Please try again in an hour.",
+  },
+});
 
 // mount route ← /account
 
 // Create a new Account
-router.post("/", async (req, res) => {
+router.post("/", openAccountLimiter, async (req, res) => {
   try {
     const userId = req.user._id;
     const { type, mobile, nickname } = req.body;
@@ -118,7 +128,7 @@ router.post("/lookup", async (req, res) => {
     const foundAccounts = await Account.find({
       $or: [{ iban: iban }, { mobile: mobile }],
     }).select("nickname");
-    
+
     if (!foundAccounts || foundAccounts.length === 0) {
       return res.status(404).json({ error: "Account not found!" });
     }

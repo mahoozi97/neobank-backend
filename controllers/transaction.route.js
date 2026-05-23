@@ -4,6 +4,7 @@ const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const createAuditLog = require("../utils/auditLog");
+const rateLimit = require("express-rate-limit");
 const transfer = require("../middleware/transfer");
 
 const dateRange = (date) => {
@@ -13,8 +14,17 @@ const dateRange = (date) => {
   return { $gte: start, $lte: end };
 };
 
+const transferLimiter = rateLimit({
+  windowMs: 10 * 1000, // 10 seconds
+  max: 1, // 1 transfer request
+  message: {
+    status: 429,
+    message: "Your previous transaction is still processing. Please wait a moment."
+  },
+});
+
 // transfer amount
-router.post("/transfer", transfer, async (req, res) => {
+router.post("/transfer", transferLimiter, transfer, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {

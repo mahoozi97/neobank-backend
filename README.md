@@ -80,6 +80,8 @@ npm run dev
 
 > Transfers are processed using MongoDB Sessions to guarantee atomicity. Either the full transfer completes or it rolls back entirely.
 
+> **Note:** Get transactions endpoint is shared between users and admin.
+
 ---
 
 ### KYC — `/kyc`
@@ -126,12 +128,6 @@ A user can only re-submit if their previous request was `rejected`.
 | PATCH | `/admin/kyc/:kycId/reject` | Reject a KYC request with a reason comment |
 
 > Approving a KYC uses a MongoDB Session to update both the `KYC` record and the `User` record atomically.
-
-**Transactions**
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/admin/transactions/:accountId` | Get transactions for an account. Supports `?status=` and `?date=` filters |
 
 **Audit Logs**
 
