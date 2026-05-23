@@ -19,7 +19,8 @@ const transferLimiter = rateLimit({
   max: 1, // 1 transfer request
   message: {
     status: 429,
-    message: "Your previous transaction is still processing. Please wait a moment."
+    message:
+      "Your previous transaction is still processing. Please wait a moment.",
   },
 });
 
@@ -139,6 +140,8 @@ router.post("/transfer", transferLimiter, transfer, async (req, res) => {
 // Shared endpoint — user fetches own account transactions, admin fetches any account
 router.get("/:accountId", async (req, res) => {
   try {
+    const userId = req.user._id;
+    const role = req.user.role;
     const accountId = req.params.accountId;
     const { page = 1, limit = 10, status, date } = req.query;
 
@@ -170,6 +173,10 @@ router.get("/:accountId", async (req, res) => {
           { toAccount: accountId, status: "success" },
         ],
       };
+    }
+
+    if (role === "user") {
+      filter.userId = userId;
     }
 
     const allTransactions = await Transaction.find(filter)
