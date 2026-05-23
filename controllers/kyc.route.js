@@ -19,7 +19,8 @@ router.post(
     { name: "frontId", maxCount: 1 },
     { name: "backId", maxCount: 1 },
     { name: "passport", maxCount: 1 },
-  ]), multerErrorHandler,
+  ]),
+  multerErrorHandler,
   async (req, res) => {
     try {
       const userId = req.user._id;
@@ -68,22 +69,10 @@ router.post(
         documents: documents,
       });
 
-      const metadata = {
-        documents: [
-          {
-            type: "front ID",
-            size: formatFileSize(req.files["frontId"][0].size),
-          },
-          {
-            type: "back ID",
-            size: formatFileSize(req.files["backId"][0].size),
-          },
-          {
-            type: "passport",
-            size: formatFileSize(req.files["passport"][0].size),
-          },
-        ],
-      };
+      const metadata = {};
+      metadata.frontId = formatFileSize(req.files["frontId"][0].size);
+      metadata.backId = formatFileSize(req.files["backId"][0].size);
+      metadata.passport = formatFileSize(req.files["passport"][0].size);
 
       await createAuditLog(req, userId, "kyc_upload", metadata);
 
