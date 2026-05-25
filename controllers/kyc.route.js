@@ -19,10 +19,8 @@ const uploadLimiter = rateLimit({
   max: 2,
   message: {
     status: 429,
-    message: "Too many upload attempts. Please try again in 5 minutes.",
+    error: "Too many upload attempts. Please try again in 5 minutes.",
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
 router.post(
