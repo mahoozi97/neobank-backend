@@ -19,7 +19,7 @@ const transferLimiter = rateLimit({
   max: 1, // 1 transfer request
   message: {
     status: 429,
-    message:
+    error:
       "Your previous transaction is still processing. Please wait a moment.",
   },
 });

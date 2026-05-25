@@ -32,10 +32,14 @@ app.use(
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 requests
+  message: {
+    status: 429,
+    error: "Too many requests. Please wait a few minutes before trying again.",
+  },
 });
 
 // Routes
-app.use("/auth", limiter, authRoutes); 
+app.use("/auth", limiter, authRoutes);
 app.use("/kyc", verifyToken, kycRoutes);
 app.use("/admin", verifyToken, requireRole("admin"), adminRoutes);
 app.use("/accounts", verifyToken, accountRoutes);
