@@ -47,16 +47,7 @@ userSchema.pre("save", async function (next) {
   if (this.password) {
     this.password = await bcrypt.hash(this.password, 10);
   }
-});
 
-userSchema.pre("findOneAndUpdate", async function () {
-  const update = this.getUpdate();
-  if (update.password) {
-    update.password = await bcrypt.hash(update.password, 10);
-  }
-});
-
-userSchema.pre("save", async function (next) {
   if (this.name) {
     this.name = this.name.toUpperCase();
   }
@@ -64,6 +55,10 @@ userSchema.pre("save", async function (next) {
 
 userSchema.pre("findOneAndUpdate", async function () {
   const update = this.getUpdate();
+  if (update.password) {
+    update.password = await bcrypt.hash(update.password, 10);
+  }
+
   if (update.name) {
     update.name = update.name.toUpperCase();
   }
